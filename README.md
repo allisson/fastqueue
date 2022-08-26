@@ -1,2 +1,2 @@
 # fastqueue
-Simple queue system based on FastAPI and PostgreSQL
+Simple queue system based on FastAPI and PostgreSQL.

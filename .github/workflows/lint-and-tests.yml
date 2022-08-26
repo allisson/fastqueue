@@ -1,0 +1,50 @@
+name: Execute lint and tests
+
+on: [push]
+
+env:
+  DATABASE_URL: "postgres://fastqueue:fastqueue@postgres:5432/fastqueue"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_DB: fastqueue
+          POSTGRES_USER: fastqueue
+          POSTGRES_PASSWORD: fastqueue
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Install system dependencies
+        run: apt update && apt install --no-install-recommends -y make git
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pypoetry/virtualenvs
+            ~/.cache/pre-commit
+          key: self-runner-${{ runner.os }}-python-3.10-poetry-${{ hashFiles('poetry.lock') }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+          cache: "pip"
+      - name: Install dependencies
+        run: |
+          cp env.sample .env
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install
+      - name: pre-commit lint
+        run: make lint
+      - name: pytest
+        run: make test

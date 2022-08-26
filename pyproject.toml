@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "fastqueue"
+version = "0.1.0"
+description = "Simple queue system based on FastAPI and PostgreSQL"
+authors = ["Allisson Azevedo <allisson@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7"
+pytest-cov = "^3.0.0"
+pre-commit = "^2.20.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion = "7.1"
+addopts = "-vvv --cov=fastqueue --cov-report=term-missing"
+
+[tool.isort]
+profile = "black"
+line_length = 110
+force_alphabetical_sort_within_sections = true
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+default_section = "THIRDPARTY"
