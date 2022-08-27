@@ -49,4 +49,4 @@ USER fastqueue
 
 # Set entrypoint and cmd
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["python", "/app/fastqueue/main.py"]
+CMD ["python", "/app/fastqueue/main.py", "server"]

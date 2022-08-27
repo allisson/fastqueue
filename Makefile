@@ -21,6 +21,9 @@ build-image:
 	docker build --rm -t fastqueue .
 
 run-server:
-	poetry run python fastqueue/main.py
+	poetry run python fastqueue/main.py server
 
-.PHONY: test lint run-db rm-db build-image run-server
+run-db-migrate:
+	poetry run python fastqueue/main.py db-migrate
+
+.PHONY: test lint run-db rm-db build-image run-server run-db-migrate

@@ -1,27 +1,20 @@
-import uvicorn
-from fastapi import FastAPI
+import typer
 
-from fastqueue.config import settings
+from fastqueue.api import run_server
+from fastqueue.database import run_migrations
 
-app = FastAPI(debug=settings.debug)
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+cli = typer.Typer()
 
 
-def run_server():
-    uvicorn.run(
-        "fastqueue.main:app",
-        debug=settings.debug,
-        host=settings.server_host,
-        port=settings.server_port,
-        log_level=settings.log_level.lower(),
-        reload=settings.server_reload,
-        workers=settings.server_num_workers,
-    )
+@cli.command("server")
+def run_server_command() -> None:
+    return run_server()
+
+
+@cli.command("db-migrate")
+def run_migrations_command() -> None:
+    return run_migrations()
 
 
 if __name__ == "__main__":
-    run_server()
+    cli()
