@@ -17,4 +17,10 @@ rm-db:
 	docker kill $$(docker ps -aqf name=postgres-fastqueue)
 	docker container rm $$(docker ps -aqf name=postgres-fastqueue)
 
-.PHONY: test lint run-db rm-db
+build-image:
+	docker build --rm -t fastqueue .
+
+run-server:
+	poetry run python fastqueue/main.py
+
+.PHONY: test lint run-db rm-db build-image run-server
