@@ -1,11 +1,15 @@
 from pathlib import Path
 
+from databases import Database
+
 from alembic import command
 from alembic.config import Config
 from fastqueue.config import settings
 from fastqueue.logger import get_logger
 
 logger = get_logger(__name__)
+force_rollback = True if settings.testing else False
+database = Database(settings.async_database_url, force_rollback=force_rollback)
 
 
 def run_migrations() -> None:

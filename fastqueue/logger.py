@@ -10,7 +10,7 @@ def get_log_level(level: str) -> int:
 
 
 def get_console_handler() -> logging.StreamHandler:
-    if settings.log_json:
+    if settings.log_json_format:
         formatter = jsonlogger.JsonFormatter(settings.log_formatter)
     else:
         formatter = logging.Formatter(settings.log_formatter)

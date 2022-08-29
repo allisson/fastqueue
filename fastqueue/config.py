@@ -2,12 +2,15 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
+    # testing settings
+    testing: bool = False
+
     # log settings
     log_formatter: str = (
         "asctime=%(asctime)s level=%(levelname)s pathname=%(pathname)s line=%(lineno)s message=%(message)s"
     )
     log_level: str = "info"
-    log_json: bool = True
+    log_json_format: bool = True
 
     # fastapi settings
     debug: bool = False
