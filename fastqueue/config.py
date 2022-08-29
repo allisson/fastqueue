@@ -20,30 +20,12 @@ class Settings(BaseSettings):
     server_num_workers: int = 1
 
     # postgresql settings
-    postgresql_host: str
-    postgresql_dbname: str
-    postgresql_user: str
-    postgresql_password: str
+    database_url: str
 
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         env_prefix = "fastqueue_"
-
-    def _create_database_url(self, prefix: str) -> str:
-        user = self.postgresql_user
-        password = self.postgresql_password
-        host = self.postgresql_host
-        dbname = self.postgresql_dbname
-        return f"{prefix}://{user}:{password}@{host}/{dbname}"
-
-    @property
-    def database_url(self) -> str:
-        return self._create_database_url("postgresql+psycopg2")
-
-    @property
-    def async_database_url(self) -> str:
-        return self._create_database_url("postgresql+asyncpg")
 
 
 settings = Settings()
