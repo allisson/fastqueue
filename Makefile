@@ -1,5 +1,5 @@
 test:
-	poetry run pytest -v
+	FASTQUEUE_TESTING='true' poetry run pytest -v
 
 lint:
 	poetry run pre-commit run --all-files
@@ -26,4 +26,7 @@ run-server:
 run-db-migrate:
 	poetry run python fastqueue/main.py db-migrate
 
-.PHONY: test lint run-db rm-db build-image run-server run-db-migrate
+create-auto-migration:
+	poetry run alembic revision --autogenerate -m "Auto generated"
+
+.PHONY: test lint run-db rm-db build-image run-server run-db-migrate create-auto-migration
