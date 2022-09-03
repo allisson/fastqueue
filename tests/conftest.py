@@ -2,8 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from fastqueue.api import app
-from fastqueue.database import engine, SessionLocal
-from fastqueue.models import Base
+from fastqueue.database import Base, engine, SessionLocal
 from tests.factories import MessageFactory, QueueFactory, TopicFactory
 
 
@@ -12,7 +11,7 @@ def client():
     return TestClient(app)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def connection():
     connection = engine.connect()
     Base.metadata.create_all(bind=engine)
