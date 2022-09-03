@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir pip -U && \
     poetry config virtualenvs.in-project true
 COPY ./poetry.lock poetry.lock
 COPY ./pyproject.toml pyproject.toml
-RUN poetry install --no-dev
+RUN poetry install --only main
 
 # Copy app files and add directory to workdir
 COPY fastqueue ./fastqueue
@@ -48,5 +48,5 @@ WORKDIR /app
 USER fastqueue
 
 # Set entrypoint and cmd
-ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["python", "/app/fastqueue/main.py", "server"]
+ENTRYPOINT ["/usr/bin/tini", "--", "python", "/app/fastqueue/main.py"]
+CMD ["server"]
