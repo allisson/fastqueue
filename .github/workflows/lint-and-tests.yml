@@ -3,7 +3,7 @@ name: Execute lint and tests
 on: [push]
 
 env:
-  FASTQUEUE_DATABASE_URL: "postgresql+psycopg2://fastqueue:fastqueue@postgres:5432/fastqueue-test"
+  FASTQUEUE_DATABASE_URL: "postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue-test"
 
 jobs:
   build:
