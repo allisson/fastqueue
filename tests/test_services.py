@@ -25,6 +25,13 @@ def test_topic_service_get(session, topic):
     assert result.created_at
 
 
+def test_topic_service_get_not_found(session):
+    service = TopicService()
+
+    with pytest.raises(NotFoundError):
+        service.get("invalid-topic-name", session=session)
+
+
 def test_topic_service_delete(session, topic):
     service = TopicService()
 
@@ -32,3 +39,10 @@ def test_topic_service_delete(session, topic):
 
     with pytest.raises(NotFoundError):
         service.get(topic.id, session=session)
+
+
+def test_topic_service_delete_not_found(session):
+    service = TopicService()
+
+    with pytest.raises(NotFoundError):
+        service.delete("invalid-topic-name", session=session)
