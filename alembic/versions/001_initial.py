@@ -1,8 +1,8 @@
 """Auto generated
 
-Revision ID: ed7f6025b378
+Revision ID: 38d1359d1e34
 Revises:
-Create Date: 2022-09-02 19:37:18.428504
+Create Date: 2022-09-03 20:31:52.937422
 
 """
 import sqlalchemy as sa
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "ed7f6025b378"
+revision = "38d1359d1e34"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -32,16 +32,11 @@ def upgrade() -> None:
         sa.Column("ack_deadline_seconds", sa.Integer(), nullable=False),
         sa.Column("message_retention_seconds", sa.Integer(), nullable=False),
         sa.Column("message_filters", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("dead_letter_queue_id", sa.String(length=128), nullable=True),
         sa.Column("dead_letter_max_retries", sa.Integer(), nullable=True),
         sa.Column("dead_letter_min_backoff_seconds", sa.Integer(), nullable=True),
         sa.Column("dead_letter_max_backoff_seconds", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["dead_letter_queue_id"],
-            ["queues.id"],
-        ),
         sa.ForeignKeyConstraint(
             ["topic_id"],
             ["topics.id"],

@@ -22,7 +22,6 @@ class CreateQueueSchema(Schema):
     ack_deadline_seconds: int
     message_retention_seconds: int
     message_filters: dict | None = None
-    dead_letter_queue_id: str | None = Field(None, regex=regex_for_id, max_length=128)
     dead_letter_max_retries: int | None = None
     dead_letter_min_backoff_seconds: int | None = None
     dead_letter_max_backoff_seconds: int | None = None
@@ -33,7 +32,6 @@ class UpdateQueueSchema(Schema):
     ack_deadline_seconds: int
     message_retention_seconds: int
     message_filters: dict | None = None
-    dead_letter_queue_id: str | None = Field(None, regex=regex_for_id, max_length=128)
     dead_letter_max_retries: int | None = None
     dead_letter_min_backoff_seconds: int | None = None
     dead_letter_max_backoff_seconds: int | None = None
@@ -45,7 +43,6 @@ class QueueSchema(Schema):
     ack_deadline_seconds: int
     message_retention_seconds: int
     message_filters: dict | None = None
-    dead_letter_queue_id: str | None = Field(None, regex=regex_for_id, max_length=128)
     dead_letter_max_retries: int | None = None
     dead_letter_min_backoff_seconds: int | None = None
     dead_letter_max_backoff_seconds: int | None = None

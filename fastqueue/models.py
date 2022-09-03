@@ -24,9 +24,6 @@ class Queue(Base):
     ack_deadline_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_retention_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_filters = sqlalchemy.Column(postgresql.JSONB, nullable=True)
-    dead_letter_queue_id = sqlalchemy.Column(
-        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("queues.id"), nullable=True
-    )
     dead_letter_max_retries = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     dead_letter_min_backoff_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     dead_letter_max_backoff_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
