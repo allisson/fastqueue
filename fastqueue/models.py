@@ -10,6 +10,9 @@ class Topic(Base):
     id = sqlalchemy.Column(sqlalchemy.String(length=128), primary_key=True, nullable=False)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 
+    def __repr__(self):
+        return f"User(id={self.id!r})"
+
 
 class Queue(Base):
     __tablename__ = "queues"
@@ -21,12 +24,17 @@ class Queue(Base):
     ack_deadline_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_retention_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_filters = sqlalchemy.Column(postgresql.JSONB, nullable=True)
-    dead_letter_queue_name = sqlalchemy.Column(sqlalchemy.String(length=128), nullable=True)
+    dead_letter_queue_id = sqlalchemy.Column(
+        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("queues.id"), nullable=True
+    )
     dead_letter_max_retries = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     dead_letter_min_backoff_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     dead_letter_max_backoff_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+
+    def __repr__(self):
+        return f"Queue(id={self.id!r}, topic_id={self.topic_id!r})"
 
 
 class Message(Base):
@@ -50,3 +58,6 @@ class Message(Base):
     scheduled_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+
+    def __repr__(self):
+        return f"Message(id={self.id!r}, queue_id={self.queue_id!r})"
