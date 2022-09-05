@@ -19,7 +19,7 @@ class Queue(Base):
 
     id = sqlalchemy.Column(sqlalchemy.String(length=128), primary_key=True, nullable=False)
     topic_id = sqlalchemy.Column(
-        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("topics.id"), index=True, nullable=False
+        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("topics.id"), index=True, nullable=True
     )
     ack_deadline_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_retention_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
@@ -53,6 +53,8 @@ class Message(Base):
     delivery_attempts = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     expired_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     scheduled_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
+    acked = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
+    dead = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 
