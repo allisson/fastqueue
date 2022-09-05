@@ -44,5 +44,7 @@ class MessageFactory(factory.Factory):
     delivery_attempts = 0
     expired_at = factory.LazyFunction(expired_at)
     scheduled_at = factory.LazyFunction(scheduled_at)
+    acked = False
+    dead = False
     created_at = factory.LazyFunction(datetime.utcnow)
     updated_at = factory.LazyFunction(datetime.utcnow)
