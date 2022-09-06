@@ -36,6 +36,7 @@ class TopicService:
     def create(cls, data: CreateTopicSchema, session: Session) -> TopicSchema:
         topic = Topic(id=data.id, created_at=datetime.utcnow())
         session.add(topic)
+        session.commit()
         return TopicSchema.from_orm(topic)
 
     @classmethod
@@ -55,14 +56,13 @@ class TopicService:
     ) -> ListTopicSchema:
         topics = session.query(Topic).order_by(Topic.id)
         topics = apply_basic_filters(topics, filters, offset, limit)
-        return ListTopicSchema(
-            data=[TopicSchema.from_orm(topic) for topic in topics.all()], offset=offset, limit=limit
-        )
+        return ListTopicSchema(data=[TopicSchema.from_orm(topic) for topic in topics.all()])
 
     @classmethod
     def delete(cls, id: str, session: Session) -> None:
         cls.get(id, session=session)
         session.query(Topic).filter_by(id=id).delete()
+        session.commit()
 
 
 class QueueService:
@@ -78,13 +78,12 @@ class QueueService:
             ack_deadline_seconds=data.ack_deadline_seconds,
             message_retention_seconds=data.message_retention_seconds,
             message_filters=data.message_filters,
-            dead_letter_max_retries=data.dead_letter_max_retries,
-            dead_letter_min_backoff_seconds=data.dead_letter_min_backoff_seconds,
-            dead_letter_max_backoff_seconds=data.dead_letter_max_backoff_seconds,
+            message_max_deliveries=data.message_max_deliveries,
             created_at=now,
             updated_at=now,
         )
         session.add(queue)
+        session.commit()
         return QueueSchema.from_orm(queue)
 
     @classmethod
@@ -97,11 +96,10 @@ class QueueService:
         queue.ack_deadline_seconds = data.ack_deadline_seconds
         queue.message_retention_seconds = data.message_retention_seconds
         queue.message_filters = data.message_filters
-        queue.dead_letter_max_retries = data.dead_letter_max_retries
-        queue.dead_letter_min_backoff_seconds = data.dead_letter_min_backoff_seconds
-        queue.dead_letter_max_backoff_seconds = data.dead_letter_max_backoff_seconds
+        queue.message_max_deliveries = data.message_max_deliveries
         queue.created_at = queue.created_at
         queue.updated_at = datetime.utcnow()
+        session.commit()
         return QueueSchema.from_orm(queue)
 
     @classmethod
@@ -121,14 +119,13 @@ class QueueService:
     ) -> ListQueueSchema:
         queues = session.query(Queue).order_by(Queue.id)
         queues = apply_basic_filters(queues, filters, offset, limit)
-        return ListQueueSchema(
-            data=[QueueSchema.from_orm(queue) for queue in queues.all()], offset=offset, limit=limit
-        )
+        return ListQueueSchema(data=[QueueSchema.from_orm(queue) for queue in queues.all()])
 
     @classmethod
     def delete(cls, id: str, session: Session) -> None:
         cls.get(id, session=session)
         session.query(Queue).filter_by(id=id).delete()
+        session.commit()
 
 
 class MessageService:
@@ -177,6 +174,7 @@ class MessageService:
             session.add(message)
             result.data.append(MessageSchema.from_orm(message))
 
+        session.commit()
         return result
 
     @classmethod
@@ -184,9 +182,8 @@ class MessageService:
         message = cls.get_model(id, session=session)
         message.delivery_attempts = data.delivery_attempts
         message.scheduled_at = data.scheduled_at
-        message.acked = data.acked
-        message.dead = data.dead
         message.updated_at = datetime.utcnow()
+        session.commit()
         return MessageSchema.from_orm(message)
 
     @classmethod
@@ -206,6 +203,25 @@ class MessageService:
     ) -> ListMessageSchema:
         messages = session.query(Message).order_by(Message.created_at)
         messages = apply_basic_filters(messages, filters, offset, limit)
-        return ListMessageSchema(
-            data=[MessageSchema.from_orm(message) for message in messages.all()], offset=offset, limit=limit
+        return ListMessageSchema(data=[MessageSchema.from_orm(message) for message in messages.all()])
+
+    @classmethod
+    def list_for_consume(cls, queue_id: str, limit: int, session: Session) -> ListMessageSchema:
+        queue = QueueService.get(id=queue_id, session=session)
+        now = datetime.utcnow()
+        filters = [Message.queue_id == queue.id, Message.expired_at >= now, Message.scheduled_at <= now]
+        if queue.message_max_deliveries is not None:
+            filters.append(Message.delivery_attempts < queue.message_max_deliveries)
+
+        data = []
+        messages = (
+            session.query(Message).filter(*filters).with_for_update(skip_locked=True).limit(limit).all()
         )
+        for message in messages:
+            message.delivery_attempts += 1
+            message.scheduled_at = now + timedelta(seconds=queue.ack_deadline_seconds)
+            message.updated_at = now
+            data.append(MessageSchema.from_orm(message))
+
+        session.commit()
+        return ListMessageSchema(data=data)

@@ -24,9 +24,7 @@ class Queue(Base):
     ack_deadline_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_retention_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_filters = sqlalchemy.Column(postgresql.JSONB, nullable=True)
-    dead_letter_max_retries = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
-    dead_letter_min_backoff_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
-    dead_letter_max_backoff_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    message_max_deliveries = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 
@@ -53,8 +51,6 @@ class Message(Base):
     delivery_attempts = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     expired_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     scheduled_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
-    acked = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
-    dead = sqlalchemy.Column(sqlalchemy.Boolean, nullable=False)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 

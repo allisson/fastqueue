@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from time import sleep
 
 import pytest
 
@@ -52,14 +53,10 @@ def test_topic_service_list(session):
     result = TopicService.list(filters=None, offset=0, limit=10, session=session)
 
     assert len(result.data) == 5
-    assert result.offset == 0
-    assert result.limit == 10
 
     result = TopicService.list(filters=None, offset=10, limit=10, session=session)
 
     assert len(result.data) == 0
-    assert result.offset == 10
-    assert result.limit == 10
 
 
 def test_topic_service_delete(session, topic):
@@ -81,9 +78,7 @@ def test_queue_service_create(session, topic):
         ack_deadline_seconds=30,
         message_retention_seconds=604800,
         message_filters={"attr1": ["attr1"]},
-        dead_letter_max_retries=5,
-        dead_letter_min_backoff_seconds=1,
-        dead_letter_max_backoff_seconds=5,
+        message_max_deliveries=5,
     )
 
     result = QueueService.create(data, session=session)
@@ -93,9 +88,7 @@ def test_queue_service_create(session, topic):
     assert result.ack_deadline_seconds == data.ack_deadline_seconds
     assert result.message_retention_seconds == data.message_retention_seconds
     assert result.message_filters == data.message_filters
-    assert result.dead_letter_max_retries == data.dead_letter_max_retries
-    assert result.dead_letter_min_backoff_seconds == data.dead_letter_min_backoff_seconds
-    assert result.dead_letter_max_backoff_seconds == data.dead_letter_max_backoff_seconds
+    assert result.message_max_deliveries == data.message_max_deliveries
     assert result.created_at
     assert result.updated_at
 
@@ -106,9 +99,7 @@ def test_queue_service_update(session, queue):
         ack_deadline_seconds=60,
         message_retention_seconds=600,
         message_filters=None,
-        dead_letter_max_retries=None,
-        dead_letter_min_backoff_seconds=None,
-        dead_letter_max_backoff_seconds=None,
+        message_max_deliveries=None,
     )
 
     result = QueueService.update(queue.id, data, session=session)
@@ -118,9 +109,7 @@ def test_queue_service_update(session, queue):
     assert result.ack_deadline_seconds == data.ack_deadline_seconds
     assert result.message_retention_seconds == data.message_retention_seconds
     assert result.message_filters == data.message_filters
-    assert result.dead_letter_max_retries == data.dead_letter_max_retries
-    assert result.dead_letter_min_backoff_seconds == data.dead_letter_min_backoff_seconds
-    assert result.dead_letter_max_backoff_seconds == data.dead_letter_max_backoff_seconds
+    assert result.message_max_deliveries == data.message_max_deliveries
     assert result.created_at
     assert result.updated_at
 
@@ -133,9 +122,7 @@ def test_queue_service_get_model(session, queue):
     assert result.ack_deadline_seconds == queue.ack_deadline_seconds
     assert result.message_retention_seconds == queue.message_retention_seconds
     assert result.message_filters == queue.message_filters
-    assert result.dead_letter_max_retries == queue.dead_letter_max_retries
-    assert result.dead_letter_min_backoff_seconds == queue.dead_letter_min_backoff_seconds
-    assert result.dead_letter_max_backoff_seconds == queue.dead_letter_max_backoff_seconds
+    assert result.message_max_deliveries == queue.message_max_deliveries
     assert result.created_at
     assert result.updated_at
 
@@ -148,9 +135,7 @@ def test_queue_service_get(session, queue):
     assert result.ack_deadline_seconds == queue.ack_deadline_seconds
     assert result.message_retention_seconds == queue.message_retention_seconds
     assert result.message_filters == queue.message_filters
-    assert result.dead_letter_max_retries == queue.dead_letter_max_retries
-    assert result.dead_letter_min_backoff_seconds == queue.dead_letter_min_backoff_seconds
-    assert result.dead_letter_max_backoff_seconds == queue.dead_letter_max_backoff_seconds
+    assert result.message_max_deliveries == queue.message_max_deliveries
     assert result.created_at
     assert result.updated_at
 
@@ -165,14 +150,10 @@ def test_queue_service_list(session, topic):
     result = QueueService.list(filters=None, offset=0, limit=10, session=session)
 
     assert len(result.data) == 5
-    assert result.offset == 0
-    assert result.limit == 10
 
     result = QueueService.list(filters=None, offset=10, limit=10, session=session)
 
     assert len(result.data) == 0
-    assert result.offset == 10
-    assert result.limit == 10
 
 
 def test_queue_service_delete(session, queue):
@@ -232,8 +213,6 @@ def test_message_service_update(session, message):
     data = UpdateMessageSchema(
         delivery_attempts=1,
         scheduled_at=datetime.utcnow() + timedelta(seconds=30),
-        acked=False,
-        dead=False,
     )
 
     result = MessageService.update(message.id, data, session=session)
@@ -257,8 +236,6 @@ def test_message_service_get_model(session, message):
     assert result.delivery_attempts == message.delivery_attempts
     assert result.expired_at == message.expired_at
     assert result.scheduled_at == message.scheduled_at
-    assert result.acked == message.acked
-    assert result.dead == message.dead
     assert result.created_at
     assert result.updated_at
 
@@ -285,11 +262,72 @@ def test_message_service_list(session, queue):
     result = MessageService.list(filters=None, offset=0, limit=10, session=session)
 
     assert len(result.data) == 5
-    assert result.offset == 0
-    assert result.limit == 10
 
     result = MessageService.list(filters=None, offset=10, limit=10, session=session)
 
     assert len(result.data) == 0
-    assert result.offset == 10
-    assert result.limit == 10
+
+
+def test_message_service_list_for_consume(session, queue):
+    queue.ack_deadline_seconds = 1
+    queue.message_max_deliveries = None
+    session.commit()
+    data = CreateMessageSchema(data={"message": "Hello World"}, attributes={"attr1": "attr1"})
+    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    now = datetime.utcnow()
+
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 2
+    for message in result.data:
+        assert message.queue_id == queue.id
+        assert message.data == data.data
+        assert message.attributes == data.attributes
+        assert message.delivery_attempts == 1
+        assert message.scheduled_at > now
+        assert message.expired_at > now
+
+    sleep(0.5)
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 0
+
+    sleep(0.5)
+    now = datetime.utcnow()
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 2
+    for message in result.data:
+        assert message.queue_id == queue.id
+        assert message.data == data.data
+        assert message.attributes == data.attributes
+        assert message.delivery_attempts == 2
+        assert message.scheduled_at > now
+        assert message.expired_at > now
+
+
+def test_message_service_list_for_consume_with_message_max_deliveries(session, queue):
+    queue.ack_deadline_seconds = 1
+    queue.message_max_deliveries = 1
+    session.commit()
+    data = CreateMessageSchema(data={"message": "Hello World"}, attributes={"attr1": "attr1"})
+    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    now = datetime.utcnow()
+
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 2
+    for message in result.data:
+        assert message.queue_id == queue.id
+        assert message.data == data.data
+        assert message.attributes == data.attributes
+        assert message.delivery_attempts == 1
+        assert message.scheduled_at > now
+        assert message.expired_at > now
+
+    sleep(0.5)
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 0
+
+    sleep(0.5)
+    now = datetime.utcnow()
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 0

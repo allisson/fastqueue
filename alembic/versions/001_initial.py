@@ -1,8 +1,8 @@
 """Auto generated
 
-Revision ID: 95c37e429139
+Revision ID: 2185874053e3
 Revises:
-Create Date: 2022-09-05 08:04:45.333771
+Create Date: 2022-09-06 16:17:25.031314
 
 """
 import sqlalchemy as sa
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "95c37e429139"
+revision = "2185874053e3"
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -32,9 +32,7 @@ def upgrade() -> None:
         sa.Column("ack_deadline_seconds", sa.Integer(), nullable=False),
         sa.Column("message_retention_seconds", sa.Integer(), nullable=False),
         sa.Column("message_filters", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("dead_letter_max_retries", sa.Integer(), nullable=True),
-        sa.Column("dead_letter_min_backoff_seconds", sa.Integer(), nullable=True),
-        sa.Column("dead_letter_max_backoff_seconds", sa.Integer(), nullable=True),
+        sa.Column("message_max_deliveries", sa.Integer(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -53,8 +51,6 @@ def upgrade() -> None:
         sa.Column("delivery_attempts", sa.Integer(), nullable=False),
         sa.Column("expired_at", sa.DateTime(), nullable=False),
         sa.Column("scheduled_at", sa.DateTime(), nullable=False),
-        sa.Column("acked", sa.Boolean(), nullable=False),
-        sa.Column("dead", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.ForeignKeyConstraint(
