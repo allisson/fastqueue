@@ -232,3 +232,19 @@ class MessageService:
 
         session.commit()
         return ListMessageSchema(data=data)
+
+    @classmethod
+    def ack(cls, id: str, session: Session) -> None:
+        session.query(Message).filter_by(id=id).delete()
+        session.commit()
+
+    @classmethod
+    def nack(cls, id: str, session: Session) -> None:
+        message = get_model(model=Message, filters={"id": id}, session=session)
+        if message is None:
+            return
+
+        now = datetime.utcnow()
+        message.scheduled_at = now
+        message.updated_at = now
+        session.commit()
