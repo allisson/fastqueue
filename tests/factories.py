@@ -40,6 +40,6 @@ class MessageFactory(factory.Factory):
     data = {"message": "Hello"}
     delivery_attempts = 0
     expired_at = factory.LazyFunction(expired_at)
-    scheduled_at = factory.LazyFunction(datetime.now)
+    scheduled_at = factory.LazyFunction(datetime.utcnow)
     created_at = factory.LazyFunction(datetime.utcnow)
     updated_at = factory.LazyFunction(datetime.utcnow)
