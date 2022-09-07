@@ -2,9 +2,10 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from fastqueue.exceptions import NotFoundError
+from fastqueue.exceptions import AlreadyExistsError, NotFoundError
 from fastqueue.models import Message, Queue, Topic
 from fastqueue.schemas import (
     CreateMessageSchema,
@@ -16,14 +17,17 @@ from fastqueue.schemas import (
     MessageSchema,
     QueueSchema,
     TopicSchema,
-    UpdateMessageSchema,
     UpdateQueueSchema,
 )
 
 
-def apply_basic_filters(query: Any, filters: dict | None, offset: int | None, limit: int | None) -> Any:
+def apply_basic_filters(
+    query: Any, filters: dict | None, offset: int | None, limit: int | None, order_by: Any | None = None
+) -> Any:
     if filters is not None:
         query = query.filter_by(**filters)
+    if order_by is not None:
+        query = query.order_by(order_by)
     if offset is not None:
         query = query.offset(offset)
     if limit is not None:
@@ -31,36 +35,56 @@ def apply_basic_filters(query: Any, filters: dict | None, offset: int | None, li
     return query
 
 
+def list_model(
+    model: Any,
+    filters: dict | None,
+    offset: int | None,
+    limit: int | None,
+    order_by: Any | None,
+    session: Session,
+) -> Any:
+    query = session.query(model)
+    query = apply_basic_filters(query=query, filters=filters, offset=offset, limit=limit, order_by=order_by)
+    return query.all()
+
+
+def get_model(model: Any, filters: dict | None, session: Session) -> Any:
+    query = session.query(model)
+    query = apply_basic_filters(query=query, filters=filters, offset=None, limit=None)
+    return query.first()
+
+
 class TopicService:
     @classmethod
     def create(cls, data: CreateTopicSchema, session: Session) -> TopicSchema:
         topic = Topic(id=data.id, created_at=datetime.utcnow())
         session.add(topic)
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            raise AlreadyExistsError("This topic already exists")
         return TopicSchema.from_orm(topic)
 
     @classmethod
-    def get_model(cls, id: str, session: Session) -> Topic | None:
-        return session.query(Topic).filter_by(id=id).first()
-
-    @classmethod
     def get(cls, id: str, session: Session) -> TopicSchema:
-        topic = cls.get_model(id=id, session=session)
+        topic = get_model(model=Topic, filters={"id": id}, session=session)
         if topic is None:
-            raise NotFoundError("topic not found")
+            raise NotFoundError("Topic not found")
         return TopicSchema.from_orm(topic)
 
     @classmethod
     def list(
         cls, filters: dict | None, offset: int | None, limit: int | None, session: Session
     ) -> ListTopicSchema:
-        topics = session.query(Topic).order_by(Topic.id)
-        topics = apply_basic_filters(topics, filters, offset, limit)
-        return ListTopicSchema(data=[TopicSchema.from_orm(topic) for topic in topics.all()])
+        topics = list_model(
+            model=Topic, filters=filters, offset=offset, limit=limit, order_by=Topic.id, session=session
+        )
+        return ListTopicSchema(data=[TopicSchema.from_orm(topic) for topic in topics])
 
     @classmethod
     def delete(cls, id: str, session: Session) -> None:
         cls.get(id, session=session)
+        session.query(Queue).filter_by(topic_id=id).update({"topic_id": None})
         session.query(Topic).filter_by(id=id).delete()
         session.commit()
 
@@ -83,7 +107,10 @@ class QueueService:
             updated_at=now,
         )
         session.add(queue)
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            raise AlreadyExistsError("This queue already exists")
         return QueueSchema.from_orm(queue)
 
     @classmethod
@@ -91,7 +118,7 @@ class QueueService:
         if data.topic_id is not None:
             TopicService.get(data.topic_id, session=session)
 
-        queue = cls.get_model(id, session=session)
+        queue = get_model(model=Queue, filters={"id": id}, session=session)
         queue.topic_id = data.topic_id
         queue.ack_deadline_seconds = data.ack_deadline_seconds
         queue.message_retention_seconds = data.message_retention_seconds
@@ -103,12 +130,8 @@ class QueueService:
         return QueueSchema.from_orm(queue)
 
     @classmethod
-    def get_model(cls, id: str, session: Session) -> Queue:
-        return session.query(Queue).filter_by(id=id).first()
-
-    @classmethod
     def get(cls, id: str, session: Session) -> QueueSchema:
-        queue = cls.get_model(id=id, session=session)
+        queue = get_model(model=Queue, filters={"id": id}, session=session)
         if queue is None:
             raise NotFoundError("queue not found")
         return QueueSchema.from_orm(queue)
@@ -117,13 +140,15 @@ class QueueService:
     def list(
         cls, filters: dict | None, offset: int | None, limit: int | None, session: Session
     ) -> ListQueueSchema:
-        queues = session.query(Queue).order_by(Queue.id)
-        queues = apply_basic_filters(queues, filters, offset, limit)
-        return ListQueueSchema(data=[QueueSchema.from_orm(queue) for queue in queues.all()])
+        queues = list_model(
+            model=Queue, filters=filters, offset=offset, limit=limit, order_by=Queue.id, session=session
+        )
+        return ListQueueSchema(data=[QueueSchema.from_orm(queue) for queue in queues])
 
     @classmethod
     def delete(cls, id: str, session: Session) -> None:
         cls.get(id, session=session)
+        session.query(Message).filter_by(queue_id=id).delete()
         session.query(Queue).filter_by(id=id).delete()
         session.commit()
 
@@ -178,21 +203,9 @@ class MessageService:
         return result
 
     @classmethod
-    def update(cls, id: str, data: UpdateMessageSchema, session: Session) -> MessageSchema:
-        message = cls.get_model(id, session=session)
-        message.delivery_attempts = data.delivery_attempts
-        message.scheduled_at = data.scheduled_at
-        message.updated_at = datetime.utcnow()
-        session.commit()
-        return MessageSchema.from_orm(message)
-
-    @classmethod
-    def get_model(cls, id: str, session: Session) -> Message:
-        return session.query(Message).filter_by(id=id).first()
-
-    @classmethod
     def get(cls, id: str, session: Session) -> MessageSchema:
-        message = cls.get_model(id=id, session=session)
+        # message = cls.get_model(id=id, session=session)
+        message = get_model(model=Message, filters={"id": id}, session=session)
         if message is None:
             raise NotFoundError("message not found")
         return MessageSchema.from_orm(message)
@@ -201,9 +214,15 @@ class MessageService:
     def list(
         cls, filters: dict | None, offset: int | None, limit: int | None, session: Session
     ) -> ListMessageSchema:
-        messages = session.query(Message).order_by(Message.created_at)
-        messages = apply_basic_filters(messages, filters, offset, limit)
-        return ListMessageSchema(data=[MessageSchema.from_orm(message) for message in messages.all()])
+        messages = list_model(
+            model=Message,
+            filters=filters,
+            offset=offset,
+            limit=limit,
+            order_by=Message.created_at,
+            session=session,
+        )
+        return ListMessageSchema(data=[MessageSchema.from_orm(message) for message in messages])
 
     @classmethod
     def list_for_consume(cls, queue_id: str, limit: int, session: Session) -> ListMessageSchema:

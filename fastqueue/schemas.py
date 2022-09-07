@@ -27,15 +27,15 @@ class ListTopicSchema(Schema):
 class CreateQueueSchema(Schema):
     id: str = Field(..., regex=regex_for_id, max_length=128)
     topic_id: str | None = Field(None, regex=regex_for_id, max_length=128)
-    ack_deadline_seconds: int = Field(30, ge=0, le=600)
-    message_retention_seconds: int = Field(1209600, ge=600, le=1209600)
+    ack_deadline_seconds: int = Field(..., ge=1, le=600)
+    message_retention_seconds: int = Field(..., ge=600, le=1209600)
     message_filters: dict[str, list[Any]] | None = None
     message_max_deliveries: int | None = Field(None, ge=1, le=1000)
 
 
 class UpdateQueueSchema(Schema):
     topic_id: str | None = Field(None, regex=regex_for_id, max_length=128)
-    ack_deadline_seconds: int = Field(..., ge=0, le=600)
+    ack_deadline_seconds: int = Field(..., ge=1, le=600)
     message_retention_seconds: int = Field(..., ge=600, le=1209600)
     message_filters: dict[str, list[Any]] | None = None
     message_max_deliveries: int | None = Field(None, ge=1, le=1000)
@@ -62,11 +62,6 @@ class ListQueueSchema(Schema):
 class CreateMessageSchema(Schema):
     data: dict
     attributes: dict | None = None
-
-
-class UpdateMessageSchema(Schema):
-    delivery_attempts: int
-    scheduled_at: datetime
 
 
 class MessageSchema(Schema):

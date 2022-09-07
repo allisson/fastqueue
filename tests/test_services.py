@@ -1,16 +1,11 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from time import sleep
 
 import pytest
 
 from fastqueue.exceptions import NotFoundError
-from fastqueue.schemas import (
-    CreateMessageSchema,
-    CreateQueueSchema,
-    CreateTopicSchema,
-    UpdateMessageSchema,
-    UpdateQueueSchema,
-)
+from fastqueue.models import Message, Queue
+from fastqueue.schemas import CreateMessageSchema, CreateQueueSchema, CreateTopicSchema, UpdateQueueSchema
 from fastqueue.services import MessageService, QueueService, TopicService
 from tests.factories import MessageFactory, QueueFactory, TopicFactory
 
@@ -22,13 +17,6 @@ def test_topic_service_create(session):
     result = TopicService.create(data, session=session)
 
     assert result.id == id
-    assert result.created_at
-
-
-def test_topic_service_get_model(session, topic):
-    result = TopicService.get_model(topic.id, session=session)
-
-    assert result.id == topic.id
     assert result.created_at
 
 
@@ -60,10 +48,18 @@ def test_topic_service_list(session):
 
 
 def test_topic_service_delete(session, topic):
+    queues = QueueFactory.build_batch(5, topic_id=topic.id)
+    for queue in queues:
+        session.add(queue)
+    session.commit()
+    assert session.query(Queue).filter_by(topic_id=topic.id).count() == 5
+
     assert TopicService.delete(topic.id, session=session) is None
 
     with pytest.raises(NotFoundError):
         TopicService.get(topic.id, session=session)
+
+    assert session.query(Queue).filter_by(topic_id=topic.id).count() == 0
 
 
 def test_topic_service_delete_not_found(session):
@@ -114,19 +110,6 @@ def test_queue_service_update(session, queue):
     assert result.updated_at
 
 
-def test_queue_service_get_model(session, queue):
-    result = QueueService.get_model(queue.id, session=session)
-
-    assert result.id == queue.id
-    assert result.topic_id == queue.topic_id
-    assert result.ack_deadline_seconds == queue.ack_deadline_seconds
-    assert result.message_retention_seconds == queue.message_retention_seconds
-    assert result.message_filters == queue.message_filters
-    assert result.message_max_deliveries == queue.message_max_deliveries
-    assert result.created_at
-    assert result.updated_at
-
-
 def test_queue_service_get(session, queue):
     result = QueueService.get(queue.id, session=session)
 
@@ -157,10 +140,18 @@ def test_queue_service_list(session, topic):
 
 
 def test_queue_service_delete(session, queue):
+    messages = MessageFactory.build_batch(5, queue_id=queue.id)
+    for message in messages:
+        session.add(message)
+    session.commit()
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
+
     assert QueueService.delete(queue.id, session=session) is None
 
     with pytest.raises(NotFoundError):
         QueueService.get(queue.id, session=session)
+
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 0
 
 
 def test_queue_service_delete_not_found(session):
@@ -207,37 +198,6 @@ def test_message_service_create(session, topic):
         assert message.queue_id in queue_names
         assert message.data == data.data
         assert message.attributes == data.attributes
-
-
-def test_message_service_update(session, message):
-    data = UpdateMessageSchema(
-        delivery_attempts=1,
-        scheduled_at=datetime.utcnow() + timedelta(seconds=30),
-    )
-
-    result = MessageService.update(message.id, data, session=session)
-
-    assert str(result.id) == message.id
-    assert result.queue_id == message.queue_id
-    assert result.data == message.data
-    assert result.attributes == message.attributes
-    assert result.delivery_attempts == message.delivery_attempts
-    assert result.created_at
-    assert result.updated_at
-
-
-def test_message_service_get_model(session, message):
-    result = MessageService.get_model(id=message.id, session=session)
-
-    assert result.id == message.id
-    assert result.queue_id == message.queue_id
-    assert result.data == message.data
-    assert result.attributes == message.attributes
-    assert result.delivery_attempts == message.delivery_attempts
-    assert result.expired_at == message.expired_at
-    assert result.scheduled_at == message.scheduled_at
-    assert result.created_at
-    assert result.updated_at
 
 
 def test_message_service_get(session, message):
