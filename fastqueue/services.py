@@ -115,10 +115,13 @@ class QueueService:
 
     @classmethod
     def update(cls, id: str, data: UpdateQueueSchema, session: Session) -> QueueSchema:
+        queue = get_model(model=Queue, filters={"id": id}, session=session)
+        if queue is None:
+            raise NotFoundError("Queue not found")
+
         if data.topic_id is not None:
             TopicService.get(data.topic_id, session=session)
 
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
         queue.topic_id = data.topic_id
         queue.ack_deadline_seconds = data.ack_deadline_seconds
         queue.message_retention_seconds = data.message_retention_seconds
@@ -133,7 +136,7 @@ class QueueService:
     def get(cls, id: str, session: Session) -> QueueSchema:
         queue = get_model(model=Queue, filters={"id": id}, session=session)
         if queue is None:
-            raise NotFoundError("queue not found")
+            raise NotFoundError("Queue not found")
         return QueueSchema.from_orm(queue)
 
     @classmethod
@@ -174,7 +177,7 @@ class MessageService:
 
     @classmethod
     def create(cls, topic_id: str, data: CreateMessageSchema, session: Session) -> ListMessageSchema:
-        result = ListMessageSchema(data=[], offset=None, limit=None)
+        result = ListMessageSchema(data=[])
         topic = TopicService.get(topic_id, session=session)
         queues = QueueService.list(filters={"topic_id": topic.id}, offset=None, limit=None, session=session)
         if not queues.data:
@@ -204,25 +207,10 @@ class MessageService:
 
     @classmethod
     def get(cls, id: str, session: Session) -> MessageSchema:
-        # message = cls.get_model(id=id, session=session)
         message = get_model(model=Message, filters={"id": id}, session=session)
         if message is None:
             raise NotFoundError("message not found")
         return MessageSchema.from_orm(message)
-
-    @classmethod
-    def list(
-        cls, filters: dict | None, offset: int | None, limit: int | None, session: Session
-    ) -> ListMessageSchema:
-        messages = list_model(
-            model=Message,
-            filters=filters,
-            offset=offset,
-            limit=limit,
-            order_by=Message.created_at,
-            session=session,
-        )
-        return ListMessageSchema(data=[MessageSchema.from_orm(message) for message in messages])
 
     @classmethod
     def list_for_consume(cls, queue_id: str, limit: int, session: Session) -> ListMessageSchema:

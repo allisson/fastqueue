@@ -124,9 +124,8 @@ def test_queue_service_get(session, queue):
 
 
 def test_queue_service_list(session, topic):
-    queues = QueueFactory.build_batch(5)
+    queues = QueueFactory.build_batch(5, topic_id=topic.id)
     for queue in queues:
-        queue.topic_id = topic.id
         session.add(queue)
     session.commit()
 
@@ -210,22 +209,6 @@ def test_message_service_get(session, message):
     assert result.delivery_attempts == message.delivery_attempts
     assert result.created_at
     assert result.updated_at
-
-
-def test_message_service_list(session, queue):
-    messages = MessageFactory.build_batch(5)
-    for message in messages:
-        message.queue_id = queue.id
-        session.add(message)
-    session.commit()
-
-    result = MessageService.list(filters=None, offset=0, limit=10, session=session)
-
-    assert len(result.data) == 5
-
-    result = MessageService.list(filters=None, offset=10, limit=10, session=session)
-
-    assert len(result.data) == 0
 
 
 def test_message_service_list_for_consume(session, queue):
