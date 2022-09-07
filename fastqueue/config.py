@@ -2,9 +2,6 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    # testing settings
-    testing: bool = False
-
     # log settings
     log_formatter: str = (
         "asctime=%(asctime)s level=%(levelname)s pathname=%(pathname)s line=%(lineno)s message=%(message)s"
@@ -21,6 +18,14 @@ class Settings(BaseSettings):
 
     # postgresql settings
     database_url: str
+
+    # queue settings
+    min_ack_deadline_seconds: int = 1
+    max_ack_deadline_seconds: int = 600
+    min_message_retention_seconds: int = 600
+    max_message_retention_seconds: int = 1209600
+    min_message_max_deliveries: int = 1
+    max_message_max_deliveries: int = 1000
 
     class Config:
         env_file = ".env"

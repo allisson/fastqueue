@@ -204,25 +204,10 @@ class MessageService:
 
     @classmethod
     def get(cls, id: str, session: Session) -> MessageSchema:
-        # message = cls.get_model(id=id, session=session)
         message = get_model(model=Message, filters={"id": id}, session=session)
         if message is None:
             raise NotFoundError("message not found")
         return MessageSchema.from_orm(message)
-
-    @classmethod
-    def list(
-        cls, filters: dict | None, offset: int | None, limit: int | None, session: Session
-    ) -> ListMessageSchema:
-        messages = list_model(
-            model=Message,
-            filters=filters,
-            offset=offset,
-            limit=limit,
-            order_by=Message.created_at,
-            session=session,
-        )
-        return ListMessageSchema(data=[MessageSchema.from_orm(message) for message in messages])
 
     @classmethod
     def list_for_consume(cls, queue_id: str, limit: int, session: Session) -> ListMessageSchema:

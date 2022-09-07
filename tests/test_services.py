@@ -212,22 +212,6 @@ def test_message_service_get(session, message):
     assert result.updated_at
 
 
-def test_message_service_list(session, queue):
-    messages = MessageFactory.build_batch(5)
-    for message in messages:
-        message.queue_id = queue.id
-        session.add(message)
-    session.commit()
-
-    result = MessageService.list(filters=None, offset=0, limit=10, session=session)
-
-    assert len(result.data) == 5
-
-    result = MessageService.list(filters=None, offset=10, limit=10, session=session)
-
-    assert len(result.data) == 0
-
-
 def test_message_service_list_for_consume(session, queue):
     queue.ack_deadline_seconds = 1
     queue.message_max_deliveries = None
