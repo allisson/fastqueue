@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from time import sleep
 
@@ -274,3 +275,34 @@ def test_message_service_list_for_consume_with_message_max_deliveries(session, q
     now = datetime.utcnow()
     result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
     assert len(result.data) == 0
+
+
+def test_message_service_ack(session, message):
+    assert session.query(Message).filter_by(id=message.id).count() == 1
+    assert MessageService.ack(id=message.id, session=session) is None
+    assert session.query(Message).filter_by(id=message.id).count() == 0
+
+
+def test_message_service_ack_with_removed_message(session):
+    id = uuid.uuid4().hex
+    assert session.query(Message).filter_by(id=id).count() == 0
+    assert MessageService.ack(id=id, session=session) is None
+    assert session.query(Message).filter_by(id=id).count() == 0
+
+
+def test_message_service_nack(session, message):
+    original_scheduled_at = message.scheduled_at
+    original_updated_at = message.updated_at
+    assert session.query(Message).filter_by(id=message.id).count() == 1
+    assert MessageService.nack(id=message.id, session=session) is None
+    assert session.query(Message).filter_by(id=message.id).count() == 1
+    session.refresh(message)
+    assert message.scheduled_at != original_scheduled_at
+    assert message.updated_at != original_updated_at
+
+
+def test_message_service_nack_with_removed_message(session):
+    id = uuid.uuid4().hex
+    assert session.query(Message).filter_by(id=id).count() == 0
+    assert MessageService.nack(id=id, session=session) is None
+    assert session.query(Message).filter_by(id=id).count() == 0

@@ -211,3 +211,15 @@ def test_list_messages_for_consume(session, message, client):
         assert m["queue_id"] == message.queue_id
         assert m["data"] == message.data
         assert m["attributes"] == message.attributes
+
+
+def test_ack_message(session, message, client):
+    response = client.post(f"/messages/{message.id}/ack")
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_nack_message(session, message, client):
+    response = client.post(f"/messages/{message.id}/nack")
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
