@@ -1,8 +1,8 @@
 """Auto generated
 
-Revision ID: 2185874053e3
+Revision ID: b290fd728c17
 Revises:
-Create Date: 2022-09-06 16:17:25.031314
+Create Date: 2022-09-06 21:44:14.941396
 
 """
 import sqlalchemy as sa
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = "2185874053e3"
+revision = "b290fd728c17"
 down_revision = None
 branch_labels = None
 depends_on = None

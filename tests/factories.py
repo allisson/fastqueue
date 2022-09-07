@@ -31,6 +31,7 @@ class QueueFactory(factory.Factory):
     id = factory.Sequence(lambda n: "queue_%s" % n)
     ack_deadline_seconds = default_ack_deadline_seconds
     message_retention_seconds = default_message_retention_seconds
+    message_max_deliveries = None
     created_at = factory.LazyFunction(datetime.utcnow)
     updated_at = factory.LazyFunction(datetime.utcnow)
 
