@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from fastqueue.api import app
 from fastqueue.database import Base, engine, SessionLocal
+from fastqueue.models import Message, Queue, Topic
 from tests.factories import MessageFactory, QueueFactory, TopicFactory
 
 
@@ -22,11 +23,13 @@ def connection():
 
 @pytest.fixture(scope="function")
 def session(connection):
-    transaction = connection.begin()
     session = SessionLocal(bind=connection)
     yield session
+    session.query(Message).delete()
+    session.query(Queue).delete()
+    session.query(Topic).delete()
+    session.commit()
     session.close()
-    transaction.rollback()
 
 
 @pytest.fixture

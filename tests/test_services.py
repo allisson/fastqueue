@@ -124,9 +124,8 @@ def test_queue_service_get(session, queue):
 
 
 def test_queue_service_list(session, topic):
-    queues = QueueFactory.build_batch(5)
+    queues = QueueFactory.build_batch(5, topic_id=topic.id)
     for queue in queues:
-        queue.topic_id = topic.id
         session.add(queue)
     session.commit()
 

@@ -12,10 +12,6 @@ def expired_at():
     return datetime.utcnow() + timedelta(seconds=default_message_retention_seconds)
 
 
-def scheduled_at():
-    return datetime.utcnow() + timedelta(seconds=default_ack_deadline_seconds)
-
-
 class TopicFactory(factory.Factory):
     class Meta:
         model = Topic
@@ -44,6 +40,6 @@ class MessageFactory(factory.Factory):
     data = {"message": "Hello"}
     delivery_attempts = 0
     expired_at = factory.LazyFunction(expired_at)
-    scheduled_at = factory.LazyFunction(scheduled_at)
+    scheduled_at = factory.LazyFunction(datetime.now)
     created_at = factory.LazyFunction(datetime.utcnow)
     updated_at = factory.LazyFunction(datetime.utcnow)

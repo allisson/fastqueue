@@ -13,7 +13,6 @@ from fastqueue.schemas import (
     ListMessageSchema,
     ListQueueSchema,
     ListTopicSchema,
-    MessageSchema,
     QueueSchema,
     TopicSchema,
     UpdateQueueSchema,
@@ -48,11 +47,6 @@ def get_session():
         yield db
     finally:
         db.close()
-
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
 
 @app.exception_handler(AlreadyExistsError)
@@ -112,7 +106,7 @@ def list_queues(offset: int = 0, limit: int = 10, session: Session = Depends(get
 
 @app.post(
     "/topics/{topic_id}/messages",
-    response_model=MessageSchema,
+    response_model=ListMessageSchema,
     status_code=status.HTTP_201_CREATED,
     tags=["messages"],
 )
