@@ -30,10 +30,10 @@ jobs:
         with:
           path: ~/.cache
           key: self-runner-${{ runner.os }}-python-3.10-poetry-${{ hashFiles('poetry.lock') }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Set up Python 3.10.6
+      - name: Set up Python 3.10.7
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10.6
+          python-version: 3.10.7
       - name: Install dependencies
         run: |
           cp env.sample .env
