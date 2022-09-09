@@ -16,6 +16,7 @@ from fastqueue.schemas import (
     ListTopicSchema,
     MessageSchema,
     QueueSchema,
+    QueueStatsSchema,
     TopicSchema,
     UpdateQueueSchema,
 )
@@ -154,6 +155,25 @@ class QueueService:
         session.query(Message).filter_by(queue_id=id).delete()
         session.query(Queue).filter_by(id=id).delete()
         session.commit()
+
+    @classmethod
+    def stats(cls, id: str, session: Session) -> QueueStatsSchema:
+        queue = cls.get(id=id, session=session)
+        now = datetime.utcnow()
+        filters = [Message.queue_id == queue.id, Message.expired_at >= now, Message.scheduled_at <= now]
+        if queue.message_max_deliveries is not None:
+            filters.append(Message.delivery_attempts < queue.message_max_deliveries)
+
+        num_undelivered_messages = session.query(Message).filter(*filters).count()
+        oldest_unacked_message_age_seconds = 0
+        oldest_unacked_message = session.query(Message).filter(*filters).order_by(Message.created_at).first()
+        if oldest_unacked_message is not None:
+            oldest_unacked_message_age_seconds = (now - oldest_unacked_message.created_at).total_seconds()
+
+        return QueueStatsSchema(
+            num_undelivered_messages=num_undelivered_messages,
+            oldest_unacked_message_age_seconds=oldest_unacked_message_age_seconds,
+        )
 
 
 class MessageService:

@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
+
 from fastapi import status
 
-from tests.factories import QueueFactory, TopicFactory
+from tests.factories import MessageFactory, QueueFactory, TopicFactory
 
 
 def test_create_topic(session, client):
@@ -155,6 +157,20 @@ def test_update_queue_not_found_topic(session, queue, client):
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response_data == {"detail": "Topic not found"}
+
+
+def test_get_queue_stats(session, queue, client):
+    created_at = datetime.utcnow() - timedelta(seconds=10)
+    messages = MessageFactory.build_batch(5, queue_id=queue.id, created_at=created_at)
+    for message in messages:
+        session.add(message)
+    session.commit()
+
+    response = client.get(f"/queues/{queue.id}/stats")
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response_data == {"num_undelivered_messages": 5, "oldest_unacked_message_age_seconds": 10}
 
 
 def test_delete_queue(session, queue, client):
