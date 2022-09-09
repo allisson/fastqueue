@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from time import sleep
 
 import pytest
@@ -157,6 +157,19 @@ def test_queue_service_delete(session, queue):
 def test_queue_service_delete_not_found(session):
     with pytest.raises(NotFoundError):
         QueueService.delete("invalid-queue-name", session=session)
+
+
+def test_queue_service_stats(session, queue):
+    created_at = datetime.utcnow() - timedelta(seconds=10)
+    messages = MessageFactory.build_batch(5, queue_id=queue.id, created_at=created_at)
+    for message in messages:
+        session.add(message)
+    session.commit()
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
+
+    result = QueueService.stats(id=queue.id, session=session)
+    assert result.num_undelivered_messages == 5
+    assert result.oldest_unacked_message_age_seconds == 10
 
 
 @pytest.mark.parametrize(

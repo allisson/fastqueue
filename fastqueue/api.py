@@ -14,6 +14,7 @@ from fastqueue.schemas import (
     ListQueueSchema,
     ListTopicSchema,
     QueueSchema,
+    QueueStatsSchema,
     TopicSchema,
     UpdateQueueSchema,
 )
@@ -92,6 +93,16 @@ def get_queue(queue_id: str, session: Session = Depends(get_session)):
 @app.put("/queues/{queue_id}", response_model=QueueSchema, status_code=status.HTTP_200_OK, tags=["queues"])
 def update_queue(queue_id: str, data: UpdateQueueSchema, session: Session = Depends(get_session)):
     return QueueService.update(id=queue_id, data=data, session=session)
+
+
+@app.get(
+    "/queues/{queue_id}/stats",
+    response_model=QueueStatsSchema,
+    status_code=status.HTTP_200_OK,
+    tags=["queues"],
+)
+def get_queue_stats(queue_id: str, session: Session = Depends(get_session)):
+    return QueueService.stats(id=queue_id, session=session)
 
 
 @app.delete("/queues/{queue_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["queues"])

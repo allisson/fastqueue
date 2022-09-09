@@ -68,20 +68,25 @@ class QueueSchema(Schema):
         orm_mode = True
 
 
+class QueueStatsSchema(Schema):
+    num_undelivered_messages: int
+    oldest_unacked_message_age_seconds: int
+
+
 class ListQueueSchema(Schema):
     data: list[QueueSchema]
 
 
 class CreateMessageSchema(Schema):
     data: dict
-    attributes: dict | None = None
+    attributes: dict[str, str] | None = None
 
 
 class MessageSchema(Schema):
     id: UUID
     queue_id: str
     data: dict
-    attributes: dict | None = None
+    attributes: dict[str, str] | None = None
     delivery_attempts: int
     expired_at: datetime
     scheduled_at: datetime
