@@ -172,6 +172,35 @@ def test_queue_service_stats(session, queue):
     assert result.oldest_unacked_message_age_seconds == 10
 
 
+def test_queue_service_cleanup_expired_at(session, queue):
+    message1 = MessageFactory(queue_id=queue.id, expired_at=datetime.utcnow() - timedelta(seconds=1))
+    message2 = MessageFactory(queue_id=queue.id, expired_at=datetime.utcnow() + timedelta(seconds=1))
+    session.add(message1)
+    session.add(message2)
+    session.commit()
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 2
+
+    assert QueueService.cleanup(id=queue.id, session=session) is None
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
+    assert session.query(Message).filter_by(queue_id=queue.id).first() == message2
+
+
+def test_queue_service_cleanup_delivery_attempts(session, queue):
+    queue.message_max_deliveries = 2
+    message1 = MessageFactory(queue_id=queue.id, delivery_attempts=1)
+    message2 = MessageFactory(queue_id=queue.id, delivery_attempts=2)
+    message3 = MessageFactory(queue_id=queue.id, delivery_attempts=3)
+    session.add(message1)
+    session.add(message2)
+    session.add(message3)
+    session.commit()
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
+
+    assert QueueService.cleanup(id=queue.id, session=session) is None
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
+    assert session.query(Message).filter_by(queue_id=queue.id).first() == message1
+
+
 @pytest.mark.parametrize(
     "queue_filters,message_attributes,expected",
     [
