@@ -242,18 +242,6 @@ def test_message_service_create(session, topic):
         assert message.attributes == data.attributes
 
 
-def test_message_service_get(session, message):
-    result = MessageService.get(id=message.id, session=session)
-
-    assert str(result.id) == message.id
-    assert result.queue_id == message.queue_id
-    assert result.data == message.data
-    assert result.attributes == message.attributes
-    assert result.delivery_attempts == message.delivery_attempts
-    assert result.created_at
-    assert result.updated_at
-
-
 def test_message_service_list_for_consume(session, queue):
     queue.ack_deadline_seconds = 1
     queue.message_max_deliveries = None

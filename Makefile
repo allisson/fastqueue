@@ -39,7 +39,10 @@ run-server:
 run-db-migrate:
 	poetry run python fastqueue/main.py db-migrate
 
+run-worker:
+	poetry run python fastqueue/main.py worker
+
 create-auto-migration:
 	poetry run alembic revision --autogenerate -m "Auto generated"
 
-.PHONY: test lint run-db rm-db run-test-db rm-test-db build-image run-server run-db-migrate create-auto-migration
+.PHONY: test lint run-db rm-db run-test-db rm-test-db build-image run-server run-db-migrate run-worker create-auto-migration

@@ -13,6 +13,7 @@ alembic = "^1.8.1"
 psycopg2-binary = "^2.9.3"
 typer = {extras = ["all"], version = "^0.6.1"}
 python-json-logger = "^2.0.4"
+rocketry = "^2.3.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7"
