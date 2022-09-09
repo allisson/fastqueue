@@ -17,6 +17,7 @@ RUN poetry install --only main
 
 # Copy app files and add directory to workdir
 COPY fastqueue ./fastqueue
+COPY alembic ./alembic
 
 ##### Final Stage #####
 FROM python:3.10-slim

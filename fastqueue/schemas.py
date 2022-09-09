@@ -9,6 +9,10 @@ from fastqueue.config import settings
 regex_for_id = "^[a-zA-Z0-9-._]+$"
 
 
+class NotFoundSchema(Schema):
+    detail: str
+
+
 class CreateTopicSchema(Schema):
     id: str = Field(..., regex=regex_for_id, max_length=128)
 

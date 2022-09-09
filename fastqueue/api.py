@@ -13,6 +13,7 @@ from fastqueue.schemas import (
     ListMessageSchema,
     ListQueueSchema,
     ListTopicSchema,
+    NotFoundSchema,
     QueueSchema,
     QueueStatsSchema,
     TopicSchema,
@@ -35,7 +36,7 @@ tags_metadata = [
     },
 ]
 app = FastAPI(
-    title="Fast Queue",
+    title="fastqueue",
     description="Simple queue system based on FastAPI and PostgreSQL.",
     debug=settings.debug,
     openapi_tags=tags_metadata,
@@ -65,12 +66,23 @@ def create_topic(data: CreateTopicSchema, session: Session = Depends(get_session
     return TopicService.create(data=data, session=session)
 
 
-@app.get("/topics/{topic_id}", response_model=TopicSchema, status_code=status.HTTP_200_OK, tags=["topics"])
+@app.get(
+    "/topics/{topic_id}",
+    response_model=TopicSchema,
+    status_code=status.HTTP_200_OK,
+    tags=["topics"],
+    responses={404: {"model": NotFoundSchema}},
+)
 def get_topic(topic_id: str, session: Session = Depends(get_session)):
     return TopicService.get(id=topic_id, session=session)
 
 
-@app.delete("/topics/{topic_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["topics"])
+@app.delete(
+    "/topics/{topic_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["topics"],
+    responses={404: {"model": NotFoundSchema}},
+)
 def delete_topic(topic_id: str, session: Session = Depends(get_session)):
     return TopicService.delete(id=topic_id, session=session)
 
@@ -85,12 +97,24 @@ def create_queue(data: CreateQueueSchema, session: Session = Depends(get_session
     return QueueService.create(data=data, session=session)
 
 
-@app.get("/queues/{queue_id}", response_model=QueueSchema, status_code=status.HTTP_200_OK, tags=["queues"])
+@app.get(
+    "/queues/{queue_id}",
+    response_model=QueueSchema,
+    status_code=status.HTTP_200_OK,
+    tags=["queues"],
+    responses={404: {"model": NotFoundSchema}},
+)
 def get_queue(queue_id: str, session: Session = Depends(get_session)):
     return QueueService.get(id=queue_id, session=session)
 
 
-@app.put("/queues/{queue_id}", response_model=QueueSchema, status_code=status.HTTP_200_OK, tags=["queues"])
+@app.put(
+    "/queues/{queue_id}",
+    response_model=QueueSchema,
+    status_code=status.HTTP_200_OK,
+    tags=["queues"],
+    responses={404: {"model": NotFoundSchema}},
+)
 def update_queue(queue_id: str, data: UpdateQueueSchema, session: Session = Depends(get_session)):
     return QueueService.update(id=queue_id, data=data, session=session)
 
@@ -100,12 +124,18 @@ def update_queue(queue_id: str, data: UpdateQueueSchema, session: Session = Depe
     response_model=QueueStatsSchema,
     status_code=status.HTTP_200_OK,
     tags=["queues"],
+    responses={404: {"model": NotFoundSchema}},
 )
 def get_queue_stats(queue_id: str, session: Session = Depends(get_session)):
     return QueueService.stats(id=queue_id, session=session)
 
 
-@app.delete("/queues/{queue_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["queues"])
+@app.delete(
+    "/queues/{queue_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["queues"],
+    responses={404: {"model": NotFoundSchema}},
+)
 def delete_queue(queue_id: str, session: Session = Depends(get_session)):
     return QueueService.delete(id=queue_id, session=session)
 
@@ -120,6 +150,7 @@ def list_queues(offset: int = 0, limit: int = 10, session: Session = Depends(get
     response_model=ListMessageSchema,
     status_code=status.HTTP_201_CREATED,
     tags=["messages"],
+    responses={404: {"model": NotFoundSchema}},
 )
 def create_message(topic_id: str, data: CreateMessageSchema, session: Session = Depends(get_session)):
     return MessageService.create(topic_id=topic_id, data=data, session=session)
@@ -130,6 +161,7 @@ def create_message(topic_id: str, data: CreateMessageSchema, session: Session = 
     response_model=ListMessageSchema,
     status_code=status.HTTP_200_OK,
     tags=["messages"],
+    responses={404: {"model": NotFoundSchema}},
 )
 def list_messages_for_consume(queue_id: str, limit: int = 10, session: Session = Depends(get_session)):
     return MessageService.list_for_consume(queue_id=queue_id, limit=limit, session=session)
