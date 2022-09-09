@@ -175,6 +175,23 @@ class QueueService:
             oldest_unacked_message_age_seconds=oldest_unacked_message_age_seconds,
         )
 
+    @classmethod
+    def cleanup(cls, id: str, session: Session) -> None:
+        queue = cls.get(id=id, session=session)
+        now = datetime.utcnow()
+
+        expired_at_filter = [Message.queue_id == queue.id, Message.expired_at <= now]
+        session.query(Message).filter(*expired_at_filter).delete()
+
+        if queue.message_max_deliveries is not None:
+            delivery_attempts_filter = [
+                Message.queue_id == queue.id,
+                Message.delivery_attempts >= queue.message_max_deliveries,
+            ]
+            session.query(Message).filter(*delivery_attempts_filter).delete()
+
+        session.commit()
+
 
 class MessageService:
     @classmethod
