@@ -2,7 +2,7 @@ import typer
 
 from fastqueue.api import run_server
 from fastqueue.database import run_migrations
-from fastqueue.workers import worker
+from fastqueue.workers import run_worker
 
 cli = typer.Typer()
 
@@ -19,7 +19,7 @@ def run_migrations_command() -> None:
 
 @cli.command("worker")
 def run_worker_command() -> None:
-    return worker.run()
+    return run_worker()
 
 
 if __name__ == "__main__":

@@ -21,3 +21,7 @@ def queue_cleanup_task():
             QueueService.cleanup(id=queue_id, session=session)
 
     logger.info("finishing queue_cleanup task")
+
+
+def run_worker():
+    return worker.run(debug=settings.debug)
