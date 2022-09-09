@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     max_message_retention_seconds: int = 1209600
     min_message_max_deliveries: int = 1
     max_message_max_deliveries: int = 1000
+    queue_cleanup_interval_seconds: int = 60
 
     class Config:
         env_file = ".env"

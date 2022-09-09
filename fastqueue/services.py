@@ -243,13 +243,6 @@ class MessageService:
         return result
 
     @classmethod
-    def get(cls, id: str, session: Session) -> MessageSchema:
-        message = get_model(model=Message, filters={"id": id}, session=session)
-        if message is None:
-            raise NotFoundError("message not found")
-        return MessageSchema.from_orm(message)
-
-    @classmethod
     def list_for_consume(cls, queue_id: str, limit: int, session: Session) -> ListMessageSchema:
         queue = QueueService.get(id=queue_id, session=session)
         now = datetime.utcnow()
