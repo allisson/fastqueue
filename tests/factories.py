@@ -25,6 +25,7 @@ class QueueFactory(factory.Factory):
         model = Queue
 
     id = factory.Sequence(lambda n: "queue_%s" % n)
+    dead_queue_id = None
     ack_deadline_seconds = default_ack_deadline_seconds
     message_retention_seconds = default_message_retention_seconds
     message_max_deliveries = None

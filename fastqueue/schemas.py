@@ -32,6 +32,7 @@ class ListTopicSchema(Schema):
 class CreateQueueSchema(Schema):
     id: str = Field(..., regex=regex_for_id, max_length=128)
     topic_id: str | None = Field(None, regex=regex_for_id, max_length=128)
+    dead_queue_id: str | None = Field(None, regex=regex_for_id, max_length=128)
     ack_deadline_seconds: int = Field(
         ..., ge=settings.min_ack_deadline_seconds, le=settings.max_ack_deadline_seconds
     )
@@ -46,6 +47,7 @@ class CreateQueueSchema(Schema):
 
 class UpdateQueueSchema(Schema):
     topic_id: str | None = Field(None, regex=regex_for_id, max_length=128)
+    dead_queue_id: str | None = Field(None, regex=regex_for_id, max_length=128)
     ack_deadline_seconds: int = Field(
         ..., ge=settings.min_ack_deadline_seconds, le=settings.max_ack_deadline_seconds
     )
@@ -61,6 +63,7 @@ class UpdateQueueSchema(Schema):
 class QueueSchema(Schema):
     id: str
     topic_id: str | None
+    dead_queue_id: str | None
     ack_deadline_seconds: int
     message_retention_seconds: int
     message_filters: dict[str, list[str]] | None
