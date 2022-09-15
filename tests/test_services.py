@@ -154,6 +154,19 @@ def test_queue_service_delete(session, queue):
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 0
 
 
+def test_queue_service_delete_dead_queue(session, queue):
+    dead_queue = QueueFactory()
+    session.add(dead_queue)
+    session.commit()
+    queue.dead_queue_id = dead_queue.id
+    session.commit()
+
+    assert QueueService.delete(dead_queue.id, session=session) is None
+
+    session.refresh(queue)
+    assert queue.dead_queue_id is None
+
+
 def test_queue_service_delete_not_found(session):
     with pytest.raises(NotFoundError):
         QueueService.delete("invalid-queue-name", session=session)
@@ -199,6 +212,32 @@ def test_queue_service_cleanup_delivery_attempts(session, queue):
     assert QueueService.cleanup(id=queue.id, session=session) is None
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
     assert session.query(Message).filter_by(queue_id=queue.id).first() == message1
+
+
+def test_queue_service_cleanup_move_to_dead_queue(session, queue):
+    dead_queue = QueueFactory()
+    session.add(dead_queue)
+    session.commit()
+    queue.message_max_deliveries = 2
+    queue.dead_queue_id = dead_queue.id
+    message1 = MessageFactory(queue_id=queue.id, delivery_attempts=1)
+    message2 = MessageFactory(queue_id=queue.id, delivery_attempts=2)
+    message3 = MessageFactory(queue_id=queue.id, delivery_attempts=3)
+    session.add(message1)
+    session.add(message2)
+    session.add(message3)
+    session.commit()
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
+
+    assert QueueService.cleanup(id=queue.id, session=session) is None
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
+    assert session.query(Message).filter_by(queue_id=queue.id).first() == message1
+
+    assert session.query(Message).filter_by(queue_id=dead_queue.id).count() == 2
+    session.refresh(message2)
+    session.refresh(message3)
+    assert message2.delivery_attempts == 0
+    assert message3.delivery_attempts == 0
 
 
 @pytest.mark.parametrize(
