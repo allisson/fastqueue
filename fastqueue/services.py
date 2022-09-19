@@ -192,38 +192,30 @@ class QueueService:
         session.query(Message).filter(*expired_at_filter).delete()
 
     @classmethod
-    def _cleanup_delivery_attempts_exceeded_messages(cls, queue: QueueSchema, session: Session) -> None:
-        if queue.message_max_deliveries is not None and queue.dead_queue_id is None:
-            delivery_attempts_filter = [
-                Message.queue_id == queue.id,
-                Message.delivery_attempts >= queue.message_max_deliveries,
-            ]
-            session.query(Message).filter(*delivery_attempts_filter).delete()
-
-    @classmethod
     def _cleanup_move_messages_to_dead_queue(cls, queue: QueueSchema, session: Session) -> None:
-        if queue.message_max_deliveries is not None and queue.dead_queue_id is not None:
-            dead_queue = cls.get(id=queue.dead_queue_id, session=session)
-            delivery_attempts_filter = [
-                Message.queue_id == queue.id,
-                Message.delivery_attempts >= queue.message_max_deliveries,
-            ]
-            now = datetime.utcnow()
-            update_data = {
-                "queue_id": queue.dead_queue_id,
-                "delivery_attempts": 0,
-                "expired_at": now + timedelta(seconds=dead_queue.message_retention_seconds),
-                "scheduled_at": now,
-                "updated_at": now,
-            }
-            session.query(Message).filter(*delivery_attempts_filter).update(update_data)
+        if queue.message_max_deliveries is None or queue.dead_queue_id is None:
+            return
+
+        dead_queue = cls.get(id=queue.dead_queue_id, session=session)
+        delivery_attempts_filter = [
+            Message.queue_id == queue.id,
+            Message.delivery_attempts >= queue.message_max_deliveries,
+        ]
+        now = datetime.utcnow()
+        update_data = {
+            "queue_id": queue.dead_queue_id,
+            "delivery_attempts": 0,
+            "expired_at": now + timedelta(seconds=dead_queue.message_retention_seconds),
+            "scheduled_at": now,
+            "updated_at": now,
+        }
+        session.query(Message).filter(*delivery_attempts_filter).update(update_data)
 
     @classmethod
     def cleanup(cls, id: str, session: Session) -> None:
         queue = cls.get(id=id, session=session)
 
         cls._cleanup_expired_messages(queue=queue, session=session)
-        cls._cleanup_delivery_attempts_exceeded_messages(queue=queue, session=session)
         cls._cleanup_move_messages_to_dead_queue(queue=queue, session=session)
 
         session.commit()
@@ -283,7 +275,7 @@ class MessageService:
         queue = QueueService.get(id=queue_id, session=session)
         now = datetime.utcnow()
         filters = [Message.queue_id == queue.id, Message.expired_at >= now, Message.scheduled_at <= now]
-        if queue.message_max_deliveries is not None:
+        if queue.dead_queue_id is not None and queue.message_max_deliveries is not None:
             filters.append(Message.delivery_attempts < queue.message_max_deliveries)
 
         data = []
