@@ -112,7 +112,6 @@ def test_update_queue(session, queue, client):
         "ack_deadline_seconds": 10,
         "message_retention_seconds": 600,
         "message_filters": {"attr1": ["attr1"]},
-        "message_max_deliveries": 10,
     }
 
     response = client.put(f"/queues/{queue.id}", json=data)
@@ -124,7 +123,6 @@ def test_update_queue(session, queue, client):
     assert response_data["ack_deadline_seconds"] == data["ack_deadline_seconds"]
     assert response_data["message_retention_seconds"] == data["message_retention_seconds"]
     assert response_data["message_filters"] == data["message_filters"]
-    assert response_data["message_max_deliveries"] == data["message_max_deliveries"]
 
 
 def test_update_queue_not_found(session, client):
@@ -133,7 +131,6 @@ def test_update_queue_not_found(session, client):
         "ack_deadline_seconds": 10,
         "message_retention_seconds": 600,
         "message_filters": {"attr1": ["attr1"]},
-        "message_max_deliveries": 10,
     }
 
     response = client.put("/queues/not-found-queue", json=data)
@@ -149,7 +146,6 @@ def test_update_queue_not_found_topic(session, queue, client):
         "ack_deadline_seconds": 10,
         "message_retention_seconds": 600,
         "message_filters": {"attr1": ["attr1"]},
-        "message_max_deliveries": 10,
     }
 
     response = client.put(f"/queues/{queue.id}", json=data)

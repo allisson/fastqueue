@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel as Schema
-from pydantic import Field
+from pydantic import Field, validator
 
 from fastqueue.config import settings
 
@@ -29,6 +29,26 @@ class ListTopicSchema(Schema):
     data: list[TopicSchema]
 
 
+def message_max_deliveries_is_required_for_dead_queue_id(v, values, **kwargs):
+    if v is None:
+        return v
+
+    if values.get("message_max_deliveries", None) is None:
+        raise ValueError("message_max_deliveries is required")
+
+    return v
+
+
+def dead_queue_id_is_required_for_message_max_deliveries(v, values, **kwargs):
+    if v is None:
+        return v
+
+    if values.get("dead_queue_id", None) is None:
+        raise ValueError("dead_queue_id is required")
+
+    return v
+
+
 class CreateQueueSchema(Schema):
     id: str = Field(..., regex=regex_for_id, max_length=128)
     topic_id: str | None = Field(None, regex=regex_for_id, max_length=128)
@@ -44,6 +64,14 @@ class CreateQueueSchema(Schema):
         None, ge=settings.min_message_max_deliveries, le=settings.max_message_max_deliveries
     )
 
+    @validator("dead_queue_id")
+    def message_max_deliveries_is_required_for_dead_queue_id(cls, v, values, **kwargs):
+        return message_max_deliveries_is_required_for_dead_queue_id(v, values, **kwargs)
+
+    @validator("message_max_deliveries")
+    def dead_queue_id_is_required_for_message_max_deliveries(cls, v, values, **kwargs):
+        return dead_queue_id_is_required_for_message_max_deliveries(v, values, **kwargs)
+
 
 class UpdateQueueSchema(Schema):
     topic_id: str | None = Field(None, regex=regex_for_id, max_length=128)
@@ -58,6 +86,14 @@ class UpdateQueueSchema(Schema):
     message_max_deliveries: int | None = Field(
         None, ge=settings.min_message_max_deliveries, le=settings.max_message_max_deliveries
     )
+
+    @validator("dead_queue_id")
+    def message_max_deliveries_is_required_for_dead_queue_id(cls, v, values, **kwargs):
+        return message_max_deliveries_is_required_for_dead_queue_id(v, values, **kwargs)
+
+    @validator("message_max_deliveries")
+    def dead_queue_id_is_required_for_message_max_deliveries(cls, v, values, **kwargs):
+        return dead_queue_id_is_required_for_message_max_deliveries(v, values, **kwargs)
 
 
 class QueueSchema(Schema):

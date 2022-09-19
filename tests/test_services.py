@@ -75,7 +75,6 @@ def test_queue_service_create(session, topic):
         ack_deadline_seconds=30,
         message_retention_seconds=604800,
         message_filters={"attr1": ["attr1"]},
-        message_max_deliveries=5,
     )
 
     result = QueueService.create(data, session=session)
@@ -198,22 +197,6 @@ def test_queue_service_cleanup_expired_at(session, queue):
     assert session.query(Message).filter_by(queue_id=queue.id).first() == message2
 
 
-def test_queue_service_cleanup_delivery_attempts(session, queue):
-    queue.message_max_deliveries = 2
-    message1 = MessageFactory(queue_id=queue.id, delivery_attempts=1)
-    message2 = MessageFactory(queue_id=queue.id, delivery_attempts=2)
-    message3 = MessageFactory(queue_id=queue.id, delivery_attempts=3)
-    session.add(message1)
-    session.add(message2)
-    session.add(message3)
-    session.commit()
-    assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
-
-    assert QueueService.cleanup(id=queue.id, session=session) is None
-    assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
-    assert session.query(Message).filter_by(queue_id=queue.id).first() == message1
-
-
 def test_queue_service_cleanup_move_to_dead_queue(session, queue):
     dead_queue = QueueFactory()
     session.add(dead_queue)
@@ -317,7 +300,11 @@ def test_message_service_list_for_consume(session, queue):
         assert message.expired_at > now
 
 
-def test_message_service_list_for_consume_with_message_max_deliveries(session, queue):
+def test_message_service_list_for_consume_with_dead_queue_and_message_max_deliveries(session, queue):
+    dead_queue = QueueFactory()
+    session.add(dead_queue)
+    session.commit()
+    queue.dead_queue_id = dead_queue.id
     queue.ack_deadline_seconds = 1
     queue.message_max_deliveries = 1
     session.commit()
