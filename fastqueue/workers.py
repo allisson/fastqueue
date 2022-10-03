@@ -8,7 +8,7 @@ from fastqueue.models import Queue
 from fastqueue.services import QueueService
 
 logger = get_logger(__name__)
-worker = Rocketry()
+worker = Rocketry(execution="main")
 
 
 @worker.task(every(f"{settings.queue_cleanup_interval_seconds} seconds"))
