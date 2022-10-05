@@ -177,12 +177,12 @@ def list_messages_for_consume(queue_id: str, limit: int = 10, session: Session =
     return MessageService.list_for_consume(queue_id=queue_id, limit=limit, session=session)
 
 
-@app.post("/messages/{message_id}/ack", status_code=status.HTTP_204_NO_CONTENT, tags=["messages"])
+@app.put("/messages/{message_id}/ack", status_code=status.HTTP_204_NO_CONTENT, tags=["messages"])
 def ack_message(message_id: str, session: Session = Depends(get_session)):
     return MessageService.ack(id=message_id, session=session)
 
 
-@app.post("/messages/{message_id}/nack", status_code=status.HTTP_204_NO_CONTENT, tags=["messages"])
+@app.put("/messages/{message_id}/nack", status_code=status.HTTP_204_NO_CONTENT, tags=["messages"])
 def nack_message(message_id: str, session: Session = Depends(get_session)):
     return MessageService.nack(id=message_id, session=session)
 
