@@ -184,6 +184,18 @@ def test_queue_service_stats(session, queue):
     assert result.oldest_unacked_message_age_seconds == 10
 
 
+def test_queue_service_purge(session, queue):
+    created_at = datetime.utcnow() - timedelta(seconds=10)
+    messages = MessageFactory.build_batch(5, queue_id=queue.id, created_at=created_at)
+    for message in messages:
+        session.add(message)
+    session.commit()
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
+
+    assert QueueService.purge(id=queue.id, session=session) is None
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 0
+
+
 def test_queue_service_cleanup_expired_at(session, queue):
     message1 = MessageFactory(queue_id=queue.id, expired_at=datetime.utcnow() - timedelta(seconds=1))
     message2 = MessageFactory(queue_id=queue.id, expired_at=datetime.utcnow() + timedelta(seconds=1))

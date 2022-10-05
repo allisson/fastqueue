@@ -169,6 +169,39 @@ def test_get_queue_stats(session, queue, client):
     assert response_data == {"num_undelivered_messages": 5, "oldest_unacked_message_age_seconds": 10}
 
 
+def test_get_queue_stats_not_found(session, client):
+    response = client.get("/queues/not-found-queue/stats")
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response_data == {"detail": "Queue not found"}
+
+
+def test_purge_queue_messages(session, queue, client):
+    created_at = datetime.utcnow() - timedelta(seconds=10)
+    messages = MessageFactory.build_batch(5, queue_id=queue.id, created_at=created_at)
+    for message in messages:
+        session.add(message)
+    session.commit()
+
+    response = client.put(f"/queues/{queue.id}/purge")
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    response = client.get(f"/queues/{queue.id}/stats")
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response_data == {"num_undelivered_messages": 0, "oldest_unacked_message_age_seconds": 0}
+
+
+def test_purge_queue_messages_not_found(session, client):
+    response = client.put("/queues/not-found-queue/purge")
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response_data == {"detail": "Queue not found"}
+
+
 def test_delete_queue(session, queue, client):
     response = client.delete(f"/queues/{queue.id}")
 

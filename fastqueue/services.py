@@ -85,9 +85,9 @@ class TopicService:
 
     @classmethod
     def delete(cls, id: str, session: Session) -> None:
-        get_model(model=Topic, filters={"id": id}, session=session)
-        session.query(Queue).filter_by(topic_id=id).update({"topic_id": None})
-        session.query(Topic).filter_by(id=id).delete()
+        topic = get_model(model=Topic, filters={"id": id}, session=session)
+        session.query(Queue).filter_by(topic_id=topic.id).update({"topic_id": None})
+        session.query(Topic).filter_by(id=topic.id).delete()
         session.commit()
 
 
@@ -156,10 +156,10 @@ class QueueService:
 
     @classmethod
     def delete(cls, id: str, session: Session) -> None:
-        get_model(model=Queue, filters={"id": id}, session=session)
-        session.query(Message).filter_by(queue_id=id).delete()
-        session.query(Queue).filter_by(dead_queue_id=id).update({"dead_queue_id": None})
-        session.query(Queue).filter_by(id=id).delete()
+        queue = get_model(model=Queue, filters={"id": id}, session=session)
+        session.query(Message).filter_by(queue_id=queue.id).delete()
+        session.query(Queue).filter_by(dead_queue_id=queue.id).update({"dead_queue_id": None})
+        session.query(Queue).filter_by(id=queue.id).delete()
         session.commit()
 
     @classmethod
@@ -181,6 +181,12 @@ class QueueService:
             num_undelivered_messages=num_undelivered_messages,
             oldest_unacked_message_age_seconds=oldest_unacked_message_age_seconds,
         )
+
+    @classmethod
+    def purge(cls, id: str, session: Session) -> None:
+        queue = get_model(model=Queue, filters={"id": id}, session=session)
+        session.query(Message).filter_by(queue_id=queue.id).delete()
+        session.commit()
 
     @classmethod
     def _cleanup_expired_messages(cls, queue: QueueSchema, session: Session) -> None:
