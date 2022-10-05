@@ -259,12 +259,12 @@ def test_list_messages_for_consume(session, message, client):
 
 
 def test_ack_message(session, message, client):
-    response = client.post(f"/messages/{message.id}/ack")
+    response = client.put(f"/messages/{message.id}/ack")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 def test_nack_message(session, message, client):
-    response = client.post(f"/messages/{message.id}/nack")
+    response = client.put(f"/messages/{message.id}/nack")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT

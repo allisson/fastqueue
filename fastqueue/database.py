@@ -26,3 +26,6 @@ def run_migrations() -> None:
     alembic_cfg.set_main_option("script_location", str(script_location))
     alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
     command.upgrade(alembic_cfg, "head")
+    logger.info(
+        "finished db migrations", extra=dict(ini_location=ini_location, script_location=script_location)
+    )
