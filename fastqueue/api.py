@@ -130,6 +130,16 @@ def get_queue_stats(queue_id: str, session: Session = Depends(get_session)):
     return QueueService.stats(id=queue_id, session=session)
 
 
+@app.put(
+    "/queues/{queue_id}/purge",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["queues"],
+    responses={404: {"model": NotFoundSchema}},
+)
+def purge_queue_messages(queue_id: str, session: Session = Depends(get_session)):
+    return QueueService.purge(id=queue_id, session=session)
+
+
 @app.delete(
     "/queues/{queue_id}",
     status_code=status.HTTP_204_NO_CONTENT,
