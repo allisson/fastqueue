@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     # postgresql settings
     database_url: str
+    database_echo: bool = False
 
     # queue settings
     min_ack_deadline_seconds: int = 1
