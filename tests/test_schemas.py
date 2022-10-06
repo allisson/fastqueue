@@ -10,12 +10,24 @@ from fastqueue.schemas import CreateQueueSchema, UpdateQueueSchema
         (
             "my-dead-queue-1",
             None,
-            [{"loc": ("dead_queue_id",), "msg": "message_max_deliveries is required", "type": "value_error"}],
+            [
+                {
+                    "loc": ("__root__",),
+                    "msg": "message_max_deliveries is required for dead queue support",
+                    "type": "value_error",
+                }
+            ],
         ),
         (
             None,
             5,
-            [{"loc": ("message_max_deliveries",), "msg": "dead_queue_id is required", "type": "value_error"}],
+            [
+                {
+                    "loc": ("__root__",),
+                    "msg": "dead_queue_id is required for dead queue support",
+                    "type": "value_error",
+                }
+            ],
         ),
     ],
 )
@@ -40,12 +52,24 @@ def test_create_queue_schema(dead_queue_id, message_max_deliveries, expected):
         (
             "my-dead-queue-1",
             None,
-            [{"loc": ("dead_queue_id",), "msg": "message_max_deliveries is required", "type": "value_error"}],
+            [
+                {
+                    "loc": ("__root__",),
+                    "msg": "message_max_deliveries is required for dead queue support",
+                    "type": "value_error",
+                }
+            ],
         ),
         (
             None,
             5,
-            [{"loc": ("message_max_deliveries",), "msg": "dead_queue_id is required", "type": "value_error"}],
+            [
+                {
+                    "loc": ("__root__",),
+                    "msg": "dead_queue_id is required for dead queue support",
+                    "type": "value_error",
+                }
+            ],
         ),
     ],
 )
