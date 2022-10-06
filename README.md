@@ -35,7 +35,7 @@ The database migration is responsible to create the database schema.
 docker run --rm \
     -e fastqueue_database_url='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
     --network="host" \
-    fastqueue db-migrate
+    quay.io/allisson/fastqueue db-migrate
 ```
 
 ### Run the worker
@@ -48,7 +48,7 @@ docker run --name fastqueue-worker \
     -e fastqueue_database_url='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
     -e fastqueue_queue_cleanup_interval_seconds=60 \
     --network="host" \
-    fastqueue worker
+    quay.io/allisson/fastqueue worker
 ```
 
 ### Run the server
@@ -62,7 +62,7 @@ docker run --name fastqueue-server \
     -e fastqueue_server_port=8000 \
     -e fastqueue_server_num_workers=1 \
     --network="host" \
-    fastqueue server
+    quay.io/allisson/fastqueue server
 ```
 
 You can access the api docs at http://localhost:8000/docs or http://localhost:8000/redoc.
