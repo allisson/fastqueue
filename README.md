@@ -9,6 +9,10 @@ Let's start with the basic concepts, we have three main entities that we must kn
 - Queue: A named resource representing a queue that receives messages from topics.
 - Message: The data that a publisher sends to a topic is eventually delivered to queues.
 
+### Environment variables
+
+See https://github.com/allisson/fastqueue/blob/main/env.sample.default.
+
 ### Run the local PostgreSQL server
 
 To run the server it is necessary to have a database available from PostgreSQL:
@@ -29,9 +33,9 @@ The database migration is responsible to create the database schema.
 
 ```bash
 docker run --rm \
-    -e FASTQUEUE_DATABASE_URL='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
+    -e fastqueue_database_url='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
     --network="host" \
-    fastqueue db-migrate
+    quay.io/allisson/fastqueue db-migrate
 ```
 
 ### Run the worker
@@ -41,10 +45,10 @@ The worker is responsible for cleanup the messages from queues (remove expired m
 ```bash
 docker run --name fastqueue-worker \
     --restart unless-stopped \
-    -e FASTQUEUE_DATABASE_URL='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
-    -e FASTQUEUE_QUEUE_CLEANUP_INTERVAL_SECONDS=60 \
+    -e fastqueue_database_url='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
+    -e fastqueue_queue_cleanup_interval_seconds=60 \
     --network="host" \
-    fastqueue worker
+    quay.io/allisson/fastqueue worker
 ```
 
 ### Run the server
@@ -54,11 +58,11 @@ The server is responsible to deliver the rest API.
 ```bash
 docker run --name fastqueue-server \
     --restart unless-stopped \
-    -e FASTQUEUE_DATABASE_URL='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
-    -e FASTQUEUE_SERVER_PORT=8000 \
-    -e FASTQUEUE_SERVER_NUM_WORKERS=1 \
+    -e fastqueue_database_url='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
+    -e fastqueue_server_port=8000 \
+    -e fastqueue_server_num_workers=1 \
     --network="host" \
-    fastqueue server
+    quay.io/allisson/fastqueue server
 ```
 
 You can access the api docs at http://localhost:8000/docs or http://localhost:8000/redoc.
