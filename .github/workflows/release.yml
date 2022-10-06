@@ -1,10 +1,9 @@
-name: Execute lint and tests
+name: Execute lint/tests/release
 
 on:
   push:
     branches:
-      - "**"
-      - "!main"
+      - main
 
 env:
   FASTQUEUE_DATABASE_URL: "postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue-test"
@@ -49,3 +48,12 @@ jobs:
         run: make lint
       - name: pytest
         run: make test
+  release-please:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: GoogleCloudPlatform/release-please-action@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: simple
+          package-name: fastqueue
