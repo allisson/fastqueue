@@ -73,9 +73,7 @@ curl -i -X 'POST' \
   -d '{
   "id": "events"
 }'
-```
 
-```
 HTTP/1.1 201 Created
 date: Wed, 05 Oct 2022 21:48:24 GMT
 server: uvicorn
@@ -92,9 +90,7 @@ content-type: application/json
 curl -i -X 'GET' \
   'http://127.0.0.1:8000/topics' \
   -H 'accept: application/json'
-```
 
-```
 HTTP/1.1 200 OK
 date: Wed, 05 Oct 2022 21:49:40 GMT
 server: uvicorn
@@ -124,9 +120,7 @@ curl -i -X 'POST' \
   "ack_deadline_seconds": 30,
   "message_retention_seconds": 1209600
 }'
-```
 
-```
 HTTP/1.1 201 Created
 date: Wed, 05 Oct 2022 21:51:43 GMT
 server: uvicorn
@@ -157,9 +151,7 @@ curl -i -X 'POST' \
   "data": {"event_name": "event1", "success": true},
   "attributes": {"event_name": "event1"}
 }'
-```
 
-```
 HTTP/1.1 201 Created
 date: Wed, 05 Oct 2022 21:54:07 GMT
 server: uvicorn
@@ -192,9 +184,7 @@ content-type: application/json
 curl -i -X 'GET' \
   'http://localhost:8000/queues/all-events/stats' \
   -H 'accept: application/json'
-```
 
-```
 HTTP/1.1 200 OK
 date: Wed, 05 Oct 2022 21:55:13 GMT
 server: uvicorn
@@ -213,9 +203,7 @@ content-type: application/json
 curl -i -X 'GET' \
   'http://localhost:8000/queues/all-events/messages' \
   -H 'accept: application/json'
-```
 
-```
 HTTP/1.1 200 OK
 date: Wed, 05 Oct 2022 21:56:07 GMT
 server: uvicorn
@@ -248,9 +236,7 @@ content-type: application/json
 curl -i -X 'PUT' \
   'http://localhost:8000/messages/147d5f58-9dc5-4f69-8ab1-107a799fd731/nack' \
   -H 'accept: application/json'
-```
 
-```
 HTTP/1.1 204 No Content
 date: Wed, 05 Oct 2022 21:57:17 GMT
 server: uvicorn
@@ -261,9 +247,7 @@ content-type: application/json
 curl -i -X 'GET' \
   'http://localhost:8000/queues/all-events/messages' \
   -H 'accept: application/json'
-```
 
-```
 HTTP/1.1 200 OK
 date: Wed, 05 Oct 2022 21:57:53 GMT
 server: uvicorn
@@ -296,9 +280,7 @@ content-type: application/json
 curl -i -X 'PUT' \
   'http://localhost:8000/messages/147d5f58-9dc5-4f69-8ab1-107a799fd731/ack' \
   -H 'accept: application/json'
-```
 
-```
 HTTP/1.1 204 No Content
 date: Wed, 05 Oct 2022 21:58:56 GMT
 server: uvicorn
@@ -306,14 +288,10 @@ content-type: application/json
 ```
 
 ```bash
-http GET http://localhost:8000/queues/all-events/messages
-
 curl -i -X 'GET' \
   'http://localhost:8000/queues/all-events/messages' \
   -H 'accept: application/json'
-```
 
-```
 HTTP/1.1 200 OK
 date: Wed, 05 Oct 2022 21:59:26 GMT
 server: uvicorn
@@ -343,9 +321,7 @@ curl -i -X 'POST' \
     "event_name": ["event2"]
   }
 }'
-```
 
-```
 HTTP/1.1 201 Created
 date: Wed, 05 Oct 2022 23:42:09 GMT
 server: uvicorn
@@ -378,9 +354,7 @@ curl -i -X 'POST' \
   "data": {"event_name": "event1", "success": true},
   "attributes": {"event_name": "event1"}
 }'
-```
 
-```
 HTTP/1.1 201 Created
 date: Wed, 05 Oct 2022 23:43:33 GMT
 server: uvicorn
@@ -418,9 +392,7 @@ curl -i -X 'POST' \
   "data": {"event_name": "event2", "success": true},
   "attributes": {"event_name": "event2"}
 }'
-```
 
-```
 HTTP/1.1 201 Created
 date: Wed, 05 Oct 2022 23:51:35 GMT
 server: uvicorn
@@ -463,4 +435,240 @@ content-type: application/json
     }
   ]
 }
+```
+
+## Dead queue support
+
+The idea of the dead queue is to move messages that could not be processed to another queue, this can be done using the combination of dead_queue_id and message_max_deliveries fields.
+
+```bash
+curl -i -X 'POST' \
+  'http://localhost:8000/queues' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": "all-events-dead",
+  "ack_deadline_seconds": 30,
+  "message_retention_seconds": 1209600
+}'
+
+HTTP/1.1 201 Created
+date: Thu, 06 Oct 2022 00:33:03 GMT
+server: uvicorn
+content-length: 260
+content-type: application/json
+
+{
+  "id":"all-events-dead",
+  "topic_id":null,
+  "dead_queue_id":null,
+  "ack_deadline_seconds":30,
+  "message_retention_seconds":1209600,
+  "message_filters":null,
+  "message_max_deliveries":null,
+  "created_at":"2022-10-06T00:33:04.707829",
+  "updated_at":"2022-10-06T00:33:04.707829"
+}
+```
+
+```bash
+curl -i -X 'PUT' \
+  'http://localhost:8000/queues/all-events' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "topic_id": "events",
+  "ack_deadline_seconds": 30,
+  "message_retention_seconds": 1209600,
+  "dead_queue_id": "all-events-dead",
+  "message_max_deliveries": 2
+}'
+
+HTTP/1.1 200 OK
+date: Thu, 06 Oct 2022 01:05:55 GMT
+server: uvicorn
+content-length: 269
+content-type: application/json
+
+{
+  "id":"all-events",
+  "topic_id":"events",
+  "dead_queue_id":"all-events-dead",
+  "ack_deadline_seconds":30,
+  "message_retention_seconds":1209600,
+  "message_filters":null,
+  "message_max_deliveries":2,
+  "created_at":"2022-10-05T21:51:44.684743",
+  "updated_at":"2022-10-06T01:05:56.066023"
+}
+```
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/all-events/messages' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Thu, 06 Oct 2022 01:07:50 GMT
+server: uvicorn
+content-length: 700
+content-type: application/json
+
+{
+  "data":[
+    {
+      "id":"1dd422ad-7d20-4257-94c0-00fc1fbb8092",
+      "queue_id":"all-events",
+      "data":{
+        "success":true,
+        "event_name":"event1"
+      },
+      "attributes":{
+        "event_name":"event1"
+      },
+      "delivery_attempts":1,
+      "expired_at":"2022-10-19T23:43:33.265369",
+      "scheduled_at":"2022-10-06T01:08:21.408095",
+      "created_at":"2022-10-05T23:43:33.265369",
+      "updated_at":"2022-10-06T01:07:51.408095"
+    },
+    {
+      "id":"8856ea21-665f-40a1-b576-33fa067c6a7a",
+      "queue_id":"all-events",
+      "data":{
+        "success":true,
+        "event_name":"event2"
+      },
+      "attributes":{
+        "event_name":"event2"
+      },
+      "delivery_attempts":1,
+      "expired_at":"2022-10-19T23:51:36.175915",
+      "scheduled_at":"2022-10-06T01:08:21.408095",
+      "created_at":"2022-10-05T23:51:36.175915",
+      "updated_at":"2022-10-06T01:07:51.408095"
+    }
+  ]
+}
+```
+
+```bash
+curl -i -X 'PUT' \
+  'http://localhost:8000/messages/1dd422ad-7d20-4257-94c0-00fc1fbb8092/nack' \
+  -H 'accept: application/json'
+
+HTTP/1.1 204 No Content
+date: Thu, 06 Oct 2022 01:09:54 GMT
+server: uvicorn
+content-type: application/json
+```
+
+```bash
+curl -i -X 'PUT' \
+  'http://localhost:8000/messages/8856ea21-665f-40a1-b576-33fa067c6a7a/nack' \
+  -H 'accept: application/json'
+
+HTTP/1.1 204 No Content
+date: Thu, 06 Oct 2022 01:10:26 GMT
+server: uvicorn
+content-type: application/json
+```
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/all-events/messages' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Thu, 06 Oct 2022 01:10:49 GMT
+server: uvicorn
+content-length: 700
+content-type: application/json
+
+{
+  "data":[
+    {
+      "id":"1dd422ad-7d20-4257-94c0-00fc1fbb8092",
+      "queue_id":"all-events",
+      "data":{
+        "success":true,
+        "event_name":"event1"
+      },
+      "attributes":{
+        "event_name":"event1"
+      },
+      "delivery_attempts":2,
+      "expired_at":"2022-10-19T23:43:33.265369",
+      "scheduled_at":"2022-10-06T01:11:19.631164",
+      "created_at":"2022-10-05T23:43:33.265369",
+      "updated_at":"2022-10-06T01:10:49.631164"
+    },
+    {
+      "id":"8856ea21-665f-40a1-b576-33fa067c6a7a",
+      "queue_id":"all-events",
+      "data":{
+        "success":true,
+        "event_name":"event2"
+      },
+      "attributes":{
+        "event_name":"event2"
+      },
+      "delivery_attempts":2,
+      "expired_at":"2022-10-19T23:51:36.175915",
+      "scheduled_at":"2022-10-06T01:11:19.631164",
+      "created_at":"2022-10-05T23:51:36.175915",
+      "updated_at":"2022-10-06T01:10:49.631164"
+    }
+  ]
+}
+```
+
+```bash
+curl -i -X 'PUT' \
+  'http://localhost:8000/messages/1dd422ad-7d20-4257-94c0-00fc1fbb8092/nack' \
+  -H 'accept: application/json'
+
+HTTP/1.1 204 No Content
+date: Thu, 06 Oct 2022 01:11:34 GMT
+server: uvicorn
+content-type: application/json
+```
+
+```bash
+curl -i -X 'PUT' \
+  'http://localhost:8000/messages/8856ea21-665f-40a1-b576-33fa067c6a7a/nack' \
+  -H 'accept: application/json'
+
+HTTP/1.1 204 No Content
+date: Thu, 06 Oct 2022 01:12:03 GMT
+server: uvicorn
+content-type: application/json
+```
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/all-events/stats' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Thu, 06 Oct 2022 01:13:14 GMT
+server: uvicorn
+content-length: 69
+content-type: application/json
+
+{"num_undelivered_messages":0,"oldest_unacked_message_age_seconds":0}
+```
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/all-events-dead/stats' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Thu, 06 Oct 2022 01:13:43 GMT
+server: uvicorn
+content-length: 72
+content-type: application/json
+
+{"num_undelivered_messages":2,"oldest_unacked_message_age_seconds":5410}
 ```
