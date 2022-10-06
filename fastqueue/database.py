@@ -10,7 +10,7 @@ from fastqueue.config import settings
 from fastqueue.logger import get_logger
 
 logger = get_logger(__name__)
-engine = create_engine(settings.database_url)
+engine = create_engine(settings.database_url, echo=settings.database_echo)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
