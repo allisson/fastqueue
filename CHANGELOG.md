@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/allisson/fastqueue/compare/v1.0.0...v1.1.0) (2022-10-07)
+
+
+### Features
+
+* add redrive support ([#31](https://github.com/allisson/fastqueue/issues/31)) ([3eac767](https://github.com/allisson/fastqueue/commit/3eac7678b883df409eb3dbcc9bd63f7ac82e175b))
+
 ## 1.0.0 (2022-10-06)
 
 
