@@ -17,6 +17,7 @@ from fastqueue.schemas import (
     MessageSchema,
     QueueSchema,
     QueueStatsSchema,
+    RedriveQueueSchema,
     TopicSchema,
     UpdateQueueSchema,
 )
@@ -56,6 +57,13 @@ def get_model(model: Any, filters: dict | None, session: Session) -> Any:
     if instance is None:
         raise NotFoundError(f"{model.__name__} not found")
     return instance
+
+
+def get_filters_for_consume(queue: Any, now: datetime) -> list:
+    filters = [Message.queue_id == queue.id, Message.expired_at >= now, Message.scheduled_at <= now]
+    if queue.dead_queue_id is not None and queue.message_max_deliveries is not None:
+        filters.append(Message.delivery_attempts < queue.message_max_deliveries)
+    return filters
 
 
 class TopicService:
@@ -167,10 +175,7 @@ class QueueService:
         queue = get_model(model=Queue, filters={"id": id}, session=session)
 
         now = datetime.utcnow()
-        filters = [Message.queue_id == queue.id, Message.expired_at >= now, Message.scheduled_at <= now]
-        if queue.message_max_deliveries is not None:
-            filters.append(Message.delivery_attempts < queue.message_max_deliveries)
-
+        filters = get_filters_for_consume(queue, now)
         num_undelivered_messages = session.query(Message).filter(*filters).count()
         oldest_unacked_message_age_seconds = 0
         oldest_unacked_message = session.query(Message).filter(*filters).order_by(Message.created_at).first()
@@ -223,6 +228,22 @@ class QueueService:
         cls._cleanup_expired_messages(queue=queue, session=session)
         cls._cleanup_move_messages_to_dead_queue(queue=queue, session=session)
 
+        session.commit()
+
+    @classmethod
+    def redrive(cls, id: str, data: RedriveQueueSchema, session: Session) -> None:
+        queue = get_model(model=Queue, filters={"id": id}, session=session)
+        destination_queue = get_model(model=Queue, filters={"id": data.destination_queue_id}, session=session)
+        now = datetime.utcnow()
+        filters = get_filters_for_consume(queue, now)
+        update_data = {
+            "queue_id": destination_queue.id,
+            "delivery_attempts": 0,
+            "expired_at": now + timedelta(seconds=destination_queue.message_retention_seconds),
+            "scheduled_at": now,
+            "updated_at": now,
+        }
+        session.query(Message).filter(*filters).update(update_data)
         session.commit()
 
 
@@ -279,10 +300,7 @@ class MessageService:
     def list_for_consume(cls, queue_id: str, limit: int, session: Session) -> ListMessageSchema:
         queue = QueueService.get(id=queue_id, session=session)
         now = datetime.utcnow()
-        filters = [Message.queue_id == queue.id, Message.expired_at >= now, Message.scheduled_at <= now]
-        if queue.dead_queue_id is not None and queue.message_max_deliveries is not None:
-            filters.append(Message.delivery_attempts < queue.message_max_deliveries)
-
+        filters = get_filters_for_consume(queue, now)
         data = []
         messages = (
             session.query(Message).filter(*filters).with_for_update(skip_locked=True).limit(limit).all()

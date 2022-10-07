@@ -1,6 +1,14 @@
 # fastqueue
 Simple queue system based on FastAPI and PostgreSQL.
 
+## Features
+
+- Simple rest api.
+- Message filtering support.
+- Dead queue support.
+- Redrive support (move messages between queues).
+- Simplicity, it does the minimum necessary, it will not have an authentication/permission scheme among other things.
+
 ## Quickstart
 
 Let's start with the basic concepts, we have three main entities that we must know to start:
@@ -675,4 +683,65 @@ content-length: 72
 content-type: application/json
 
 {"num_undelivered_messages":2,"oldest_unacked_message_age_seconds":5410}
+```
+
+## Redrive support
+
+With redrive you can move messages between queues, we usually use this feature to move messages from the dead queue to the original queue.
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/all-events/stats' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Fri, 07 Oct 2022 20:13:15 GMT
+server: uvicorn
+content-length: 69
+content-type: application/json
+
+{"num_undelivered_messages":0,"oldest_unacked_message_age_seconds":0}
+```
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/all-events-dead/stats' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Fri, 07 Oct 2022 20:13:36 GMT
+server: uvicorn
+content-length: 71
+content-type: application/json
+
+{"num_undelivered_messages":2,"oldest_unacked_message_age_seconds":573}
+```
+
+```bash
+curl -i -X 'PUT' \
+  'http://localhost:8000/queues/all-events-dead/redrive' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "destination_queue_id": "all-events"
+}'
+
+HTTP/1.1 204 No Content
+date: Fri, 07 Oct 2022 20:16:39 GMT
+server: uvicorn
+content-type: application/json
+```
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/all-events/stats' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Fri, 07 Oct 2022 20:17:09 GMT
+server: uvicorn
+content-length: 71
+content-type: application/json
+
+{"num_undelivered_messages":2,"oldest_unacked_message_age_seconds":787}
 ```

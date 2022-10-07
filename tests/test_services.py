@@ -6,7 +6,13 @@ import pytest
 
 from fastqueue.exceptions import NotFoundError
 from fastqueue.models import Message, Queue
-from fastqueue.schemas import CreateMessageSchema, CreateQueueSchema, CreateTopicSchema, UpdateQueueSchema
+from fastqueue.schemas import (
+    CreateMessageSchema,
+    CreateQueueSchema,
+    CreateTopicSchema,
+    RedriveQueueSchema,
+    UpdateQueueSchema,
+)
 from fastqueue.services import MessageService, QueueService, TopicService
 from tests.factories import MessageFactory, QueueFactory, TopicFactory
 
@@ -233,6 +239,32 @@ def test_queue_service_cleanup_move_to_dead_queue(session, queue):
     session.refresh(message3)
     assert message2.delivery_attempts == 0
     assert message3.delivery_attempts == 0
+
+
+def test_queue_service_redrive(session, queue):
+    dead_queue = QueueFactory()
+    session.add(dead_queue)
+    session.commit()
+    message1 = MessageFactory(queue_id=dead_queue.id)
+    message2 = MessageFactory(queue_id=dead_queue.id)
+    message3 = MessageFactory(queue_id=dead_queue.id)
+    session.add(message1)
+    session.add(message2)
+    session.add(message3)
+    session.commit()
+
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 0
+    assert session.query(Message).filter_by(queue_id=dead_queue.id).count() == 3
+
+    data = RedriveQueueSchema(destination_queue_id=queue.id, message_count=3)
+    assert QueueService.redrive(id=dead_queue.id, data=data, session=session) is None
+
+    assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
+    assert session.query(Message).filter_by(queue_id=dead_queue.id).count() == 0
+    messages = session.query(Message).filter_by(queue_id=queue.id).all()
+    assert message1 in messages
+    assert message2 in messages
+    assert message3 in messages
 
 
 @pytest.mark.parametrize(
