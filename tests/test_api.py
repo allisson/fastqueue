@@ -202,6 +202,32 @@ def test_purge_queue_messages_not_found(session, client):
     assert response_data == {"detail": "Queue not found"}
 
 
+def test_redrive_queue_messages(session, queue, client):
+    dead_queue = QueueFactory()
+    session.add(dead_queue)
+    session.commit()
+
+    session.add(MessageFactory(queue_id=dead_queue.id))
+    session.commit()
+
+    response = client.put(f"/queues/{dead_queue.id}/redrive", json={"destination_queue_id": queue.id})
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    response = client.get(f"/queues/{queue.id}/stats")
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response_data == {"num_undelivered_messages": 1, "oldest_unacked_message_age_seconds": 0}
+
+
+def test_redrive_queue_messages_not_found(session, queue, client):
+    response = client.put("/queues/not-found-queue/redrive", json={"destination_queue_id": queue.id})
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert response_data == {"detail": "Queue not found"}
+
+
 def test_delete_queue(session, queue, client):
     response = client.delete(f"/queues/{queue.id}")
 

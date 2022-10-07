@@ -16,6 +16,7 @@ from fastqueue.schemas import (
     NotFoundSchema,
     QueueSchema,
     QueueStatsSchema,
+    RedriveQueueSchema,
     TopicSchema,
     UpdateQueueSchema,
 )
@@ -138,6 +139,16 @@ def get_queue_stats(queue_id: str, session: Session = Depends(get_session)):
 )
 def purge_queue_messages(queue_id: str, session: Session = Depends(get_session)):
     return QueueService.purge(id=queue_id, session=session)
+
+
+@app.put(
+    "/queues/{queue_id}/redrive",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["queues"],
+    responses={404: {"model": NotFoundSchema}},
+)
+def redrive_queue_messages(queue_id: str, data: RedriveQueueSchema, session: Session = Depends(get_session)):
+    return QueueService.redrive(id=queue_id, data=data, session=session)
 
 
 @app.delete(

@@ -100,6 +100,10 @@ class QueueStatsSchema(Schema):
     oldest_unacked_message_age_seconds: int
 
 
+class RedriveQueueSchema(Schema):
+    destination_queue_id: str
+
+
 class ListQueueSchema(Schema):
     data: list[QueueSchema]
 
