@@ -745,3 +745,102 @@ content-type: application/json
 
 {"num_undelivered_messages":2,"oldest_unacked_message_age_seconds":787}
 ```
+
+## Prometheus metrics
+
+You can enable prometheus metrics using the environment variable `fastqueue_enable_prometheus_metrics='true'`.
+
+```bash
+docker run --name fastqueue-server \
+    --restart unless-stopped \
+    -e fastqueue_database_url='postgresql+psycopg2://fastqueue:fastqueue@localhost:5432/fastqueue' \
+    -e fastqueue_server_port=8000 \
+    -e fastqueue_server_num_workers=1 \
+    -e fastqueue_enable_prometheus_metrics='true' \
+    --network="host" \
+    quay.io/allisson/fastqueue server
+```
+
+```bash
+curl -i -X 'GET' 'http://localhost:8000/metrics'
+
+HTTP/1.1 200 OK
+date: Fri, 14 Oct 2022 15:58:56 GMT
+server: uvicorn
+content-length: 4432
+content-type: text/plain; version=0.0.4; charset=utf-8
+
+# HELP python_gc_objects_collected_total Objects collected during gc
+# TYPE python_gc_objects_collected_total counter
+python_gc_objects_collected_total{generation="0"} 427.0
+python_gc_objects_collected_total{generation="1"} 198.0
+python_gc_objects_collected_total{generation="2"} 16.0
+# HELP python_gc_objects_uncollectable_total Uncollectable object found during GC
+# TYPE python_gc_objects_uncollectable_total counter
+python_gc_objects_uncollectable_total{generation="0"} 0.0
+python_gc_objects_uncollectable_total{generation="1"} 0.0
+python_gc_objects_uncollectable_total{generation="2"} 0.0
+# HELP python_gc_collections_total Number of times this generation was collected
+# TYPE python_gc_collections_total counter
+python_gc_collections_total{generation="0"} 241.0
+python_gc_collections_total{generation="1"} 21.0
+python_gc_collections_total{generation="2"} 1.0
+# HELP python_info Python platform information
+# TYPE python_info gauge
+python_info{implementation="CPython",major="3",minor="10",patchlevel="7",version="3.10.7"} 1.0
+# HELP process_virtual_memory_bytes Virtual memory size in bytes.
+# TYPE process_virtual_memory_bytes gauge
+process_virtual_memory_bytes 2.11103744e+08
+# HELP process_resident_memory_bytes Resident memory size in bytes.
+# TYPE process_resident_memory_bytes gauge
+process_resident_memory_bytes 7.9659008e+07
+# HELP process_start_time_seconds Start time of the process since unix epoch in seconds.
+# TYPE process_start_time_seconds gauge
+process_start_time_seconds 1.66576313315e+09
+# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+# TYPE process_cpu_seconds_total counter
+process_cpu_seconds_total 0.48
+# HELP process_open_fds Number of open file descriptors.
+# TYPE process_open_fds gauge
+process_open_fds 23.0
+# HELP process_max_fds Maximum number of open file descriptors.
+# TYPE process_max_fds gauge
+process_max_fds 1024.0
+# HELP http_requests_total Total number of requests by method, status and handler.
+# TYPE http_requests_total counter
+# HELP http_request_size_bytes Content length of incoming requests by handler. Only value of header is respected. Otherwise ignored. No percentile calculated.
+# TYPE http_request_size_bytes summary
+# HELP http_response_size_bytes Content length of outgoing responses by handler. Only value of header is respected. Otherwise ignored. No percentile calculated.
+# TYPE http_response_size_bytes summary
+# HELP http_request_duration_highr_seconds Latency with many buckets but no API specific labels. Made for more accurate percentile calculations.
+# TYPE http_request_duration_highr_seconds histogram
+http_request_duration_highr_seconds_bucket{le="0.01"} 0.0
+http_request_duration_highr_seconds_bucket{le="0.025"} 0.0
+http_request_duration_highr_seconds_bucket{le="0.05"} 0.0
+http_request_duration_highr_seconds_bucket{le="0.075"} 0.0
+http_request_duration_highr_seconds_bucket{le="0.1"} 0.0
+http_request_duration_highr_seconds_bucket{le="0.25"} 0.0
+http_request_duration_highr_seconds_bucket{le="0.5"} 0.0
+http_request_duration_highr_seconds_bucket{le="0.75"} 0.0
+http_request_duration_highr_seconds_bucket{le="1.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="1.5"} 0.0
+http_request_duration_highr_seconds_bucket{le="2.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="2.5"} 0.0
+http_request_duration_highr_seconds_bucket{le="3.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="3.5"} 0.0
+http_request_duration_highr_seconds_bucket{le="4.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="4.5"} 0.0
+http_request_duration_highr_seconds_bucket{le="5.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="7.5"} 0.0
+http_request_duration_highr_seconds_bucket{le="10.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="30.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="60.0"} 0.0
+http_request_duration_highr_seconds_bucket{le="+Inf"} 0.0
+http_request_duration_highr_seconds_count 0.0
+http_request_duration_highr_seconds_sum 0.0
+# HELP http_request_duration_highr_seconds_created Latency with many buckets but no API specific labels. Made for more accurate percentile calculations.
+# TYPE http_request_duration_highr_seconds_created gauge
+http_request_duration_highr_seconds_created 1.6657631341236415e+09
+# HELP http_request_duration_seconds Latency with only few buckets by handler. Made to be only used if aggregation by handler is important.
+# TYPE http_request_duration_seconds histogram
+```
