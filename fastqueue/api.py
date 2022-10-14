@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import Depends, FastAPI, Request, status
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
 
 from fastqueue.config import settings
@@ -50,6 +51,13 @@ def get_session():
         yield db
     finally:
         db.close()
+
+
+@app.on_event("startup")
+async def startup():
+    if not settings.enable_prometheus_metrics:
+        return
+    Instrumentator().instrument(app).expose(app)
 
 
 @app.exception_handler(AlreadyExistsError)
