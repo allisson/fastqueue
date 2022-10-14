@@ -7,6 +7,7 @@ Simple queue system based on FastAPI and PostgreSQL.
 - Message filtering support.
 - Dead queue support.
 - Redrive support (move messages between queues).
+- Prometheus metrics support.
 - Simplicity, it does the minimum necessary, it will not have an authentication/permission scheme among other things.
 
 ## Quickstart
