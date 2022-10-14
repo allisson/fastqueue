@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/allisson/fastqueue/compare/v1.1.0...v1.2.0) (2022-10-14)
+
+
+### Features
+
+* add prometheus metrics support ([#33](https://github.com/allisson/fastqueue/issues/33)) ([a624be1](https://github.com/allisson/fastqueue/commit/a624be14b84b88120239ee13a3fd518d048b749e))
+
 ## [1.1.0](https://github.com/allisson/fastqueue/compare/v1.0.0...v1.1.0) (2022-10-07)
 
 
