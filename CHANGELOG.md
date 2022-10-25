@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/allisson/fastqueue/compare/v1.3.0...v1.3.1) (2022-10-25)
+
+
+### Bug Fixes
+
+* replace psycopg2-binary with psycopg2 ([#37](https://github.com/allisson/fastqueue/issues/37)) ([056323f](https://github.com/allisson/fastqueue/commit/056323f54d510148bd02b206e2604743b1837b91))
+
 ## [1.3.0](https://github.com/allisson/fastqueue/compare/v1.2.0...v1.3.0) (2022-10-25)
 
 
