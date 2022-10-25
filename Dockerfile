@@ -1,5 +1,5 @@
 ##### Builder Stage #####
-FROM python:3.10-slim as builder
+FROM python:3.11-slim as builder
 
 # Set default path
 ENV PATH="/app/.venv/bin:${PATH}"
@@ -20,7 +20,7 @@ COPY fastqueue ./fastqueue
 COPY alembic ./alembic
 
 ##### Final Stage #####
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Disable Prompt During Packages Installation
 ARG DEBIAN_FRONTEND=noninteractive
