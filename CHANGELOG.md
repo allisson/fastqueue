@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/allisson/fastqueue/compare/v1.2.0...v1.3.0) (2022-10-25)
+
+
+### Features
+
+* use python 3.11 ([#35](https://github.com/allisson/fastqueue/issues/35)) ([162078d](https://github.com/allisson/fastqueue/commit/162078d8eb1f6ce7b9f63197ef432ca077399162))
+
 ## [1.2.0](https://github.com/allisson/fastqueue/compare/v1.1.0...v1.2.0) (2022-10-14)
 
 
