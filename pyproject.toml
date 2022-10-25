@@ -5,7 +5,7 @@ description = "Simple queue system based on FastAPI and PostgreSQL"
 authors = ["Allisson Azevedo <allisson@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 fastapi = "^0.81.0"
 uvicorn = {extras = ["standard"], version = "^0.18.3"}
 SQLAlchemy = "^1.4.40"
