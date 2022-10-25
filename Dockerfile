@@ -1,6 +1,12 @@
 ##### Builder Stage #####
 FROM python:3.11-slim as builder
 
+# Install packages
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y build-essential libpq-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set default path
 ENV PATH="/app/.venv/bin:${PATH}"
 
@@ -34,7 +40,7 @@ COPY --from=builder /app /app
 
 # Install packages
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y tini && \
+    apt-get install --no-install-recommends -y libpq-dev tini && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

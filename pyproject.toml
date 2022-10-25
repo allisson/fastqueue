@@ -10,11 +10,11 @@ fastapi = "^0.81.0"
 uvicorn = {extras = ["standard"], version = "^0.18.3"}
 SQLAlchemy = "^1.4.40"
 alembic = "^1.8.1"
-psycopg2-binary = "^2.9.3"
 typer = {extras = ["all"], version = "^0.6.1"}
 python-json-logger = "^2.0.4"
 rocketry = "^2.3.0"
 prometheus-fastapi-instrumentator = "^5.9.1"
+psycopg2 = "^2.9.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7"
