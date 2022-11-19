@@ -55,6 +55,9 @@ class CreateQueueSchema(Schema):
     message_max_deliveries: int | None = Field(
         None, ge=settings.min_message_max_deliveries, le=settings.max_message_max_deliveries
     )
+    delivery_delay_seconds: int | None = Field(
+        None, ge=settings.min_delivery_delay_seconds, le=settings.max_delivery_delay_seconds
+    )
 
     @root_validator()
     def message_max_deliveries_is_required_for_dead_queue_id(cls, values):
@@ -74,6 +77,9 @@ class UpdateQueueSchema(Schema):
     message_max_deliveries: int | None = Field(
         None, ge=settings.min_message_max_deliveries, le=settings.max_message_max_deliveries
     )
+    delivery_delay_seconds: int | None = Field(
+        None, ge=settings.min_delivery_delay_seconds, le=settings.max_delivery_delay_seconds
+    )
 
     @root_validator()
     def message_max_deliveries_is_required_for_dead_queue_id(cls, values):
@@ -88,6 +94,7 @@ class QueueSchema(Schema):
     message_retention_seconds: int
     message_filters: dict[str, list[str]] | None
     message_max_deliveries: int | None
+    delivery_delay_seconds: int | None
     created_at: datetime
     updated_at: datetime
 
