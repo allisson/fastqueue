@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/allisson/fastqueue/compare/v1.3.2...v1.4.0) (2022-11-19)
+
+
+### Features
+
+* add delay queues support ([#41](https://github.com/allisson/fastqueue/issues/41)) ([62b5db6](https://github.com/allisson/fastqueue/commit/62b5db6f60d3bfc0c2baee81903883bdebab80ce))
+
 ## [1.3.2](https://github.com/allisson/fastqueue/compare/v1.3.1...v1.3.2) (2022-10-25)
 
 
