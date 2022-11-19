@@ -117,6 +117,7 @@ class QueueService:
             message_retention_seconds=data.message_retention_seconds,
             message_filters=data.message_filters,
             message_max_deliveries=data.message_max_deliveries,
+            delivery_delay_seconds=data.delivery_delay_seconds,
             created_at=now,
             updated_at=now,
         )
@@ -143,6 +144,7 @@ class QueueService:
         queue.message_retention_seconds = data.message_retention_seconds
         queue.message_filters = data.message_filters
         queue.message_max_deliveries = data.message_max_deliveries
+        queue.delivery_delay_seconds = data.delivery_delay_seconds
         queue.created_at = queue.created_at
         queue.updated_at = datetime.utcnow()
         session.commit()
@@ -212,11 +214,14 @@ class QueueService:
             Message.delivery_attempts >= queue.message_max_deliveries,
         ]
         now = datetime.utcnow()
+        scheduled_at = now
+        if dead_queue.delivery_delay_seconds is not None:
+            scheduled_at = now + timedelta(seconds=dead_queue.delivery_delay_seconds)
         update_data = {
             "queue_id": queue.dead_queue_id,
             "delivery_attempts": 0,
             "expired_at": now + timedelta(seconds=dead_queue.message_retention_seconds),
-            "scheduled_at": now,
+            "scheduled_at": scheduled_at,
             "updated_at": now,
         }
         session.query(Message).filter(*delivery_attempts_filter).update(update_data)
@@ -235,12 +240,15 @@ class QueueService:
         queue = get_model(model=Queue, filters={"id": id}, session=session)
         destination_queue = get_model(model=Queue, filters={"id": data.destination_queue_id}, session=session)
         now = datetime.utcnow()
+        scheduled_at = now
+        if destination_queue.delivery_delay_seconds is not None:
+            scheduled_at = now + timedelta(seconds=destination_queue.delivery_delay_seconds)
         filters = get_filters_for_consume(queue, now)
         update_data = {
             "queue_id": destination_queue.id,
             "delivery_attempts": 0,
             "expired_at": now + timedelta(seconds=destination_queue.message_retention_seconds),
-            "scheduled_at": now,
+            "scheduled_at": scheduled_at,
             "updated_at": now,
         }
         session.query(Message).filter(*filters).update(update_data)
@@ -279,6 +287,9 @@ class MessageService:
                 continue
 
             now = datetime.utcnow()
+            scheduled_at = now
+            if queue.delivery_delay_seconds is not None:
+                scheduled_at = now + timedelta(seconds=queue.delivery_delay_seconds)
             message = Message(
                 id=uuid.uuid4().hex,
                 queue_id=queue.id,
@@ -286,7 +297,7 @@ class MessageService:
                 attributes=data.attributes,
                 delivery_attempts=0,
                 expired_at=now + timedelta(seconds=queue.message_retention_seconds),
-                scheduled_at=now,
+                scheduled_at=scheduled_at,
                 created_at=now,
                 updated_at=now,
             )

@@ -7,6 +7,7 @@ Simple queue system based on FastAPI and PostgreSQL.
 - Message filtering support.
 - Dead queue support.
 - Redrive support (move messages between queues).
+- Delay queues support.
 - Prometheus metrics support.
 - Simplicity, it does the minimum necessary, it will not have an authentication/permission scheme among other things.
 
@@ -148,6 +149,7 @@ content-type: application/json
   "message_retention_seconds":1209600,
   "message_filters":null,
   "message_max_deliveries":null,
+  "delivery_delay_seconds":null,
   "created_at":"2022-10-05T21:51:44.684743",
   "updated_at":"2022-10-05T21:51:44.684743"
 }
@@ -353,6 +355,7 @@ content-type: application/json
     ]
   },
   "message_max_deliveries":null,
+  "delivery_delay_seconds":null,
   "created_at":"2022-10-05T23:42:10.322336",
   "updated_at":"2022-10-05T23:42:10.322336"
 }
@@ -479,6 +482,7 @@ content-type: application/json
   "message_retention_seconds":1209600,
   "message_filters":null,
   "message_max_deliveries":null,
+  "delivery_delay_seconds":null,
   "created_at":"2022-10-06T00:33:04.707829",
   "updated_at":"2022-10-06T00:33:04.707829"
 }
@@ -511,6 +515,7 @@ content-type: application/json
   "message_retention_seconds":1209600,
   "message_filters":null,
   "message_max_deliveries":2,
+  "delivery_delay_seconds":null,
   "created_at":"2022-10-05T21:51:44.684743",
   "updated_at":"2022-10-06T01:05:56.066023"
 }
@@ -745,6 +750,130 @@ content-length: 71
 content-type: application/json
 
 {"num_undelivered_messages":2,"oldest_unacked_message_age_seconds":787}
+```
+
+## Delay queues
+
+Delay queues let you postpone the delivery of new messages to consumers for a number of seconds.
+
+```bash
+curl -i -X 'POST' \
+  'http://localhost:8000/queues' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "id": "delayed-events",
+  "topic_id": "events",
+  "ack_deadline_seconds": 30,
+  "message_retention_seconds": 1209600,
+  "delivery_delay_seconds": 30
+}'
+
+HTTP/1.1 201 Created
+date: Sat, 19 Nov 2022 17:53:42 GMT
+server: uvicorn
+content-length: 291
+content-type: application/json
+
+{
+  "id":"delayed-events",
+  "topic_id":"events",
+  "dead_queue_id":null,
+  "ack_deadline_seconds":30,
+  "message_retention_seconds":1209600,
+  "message_filters":null,
+  "message_max_deliveries":null,
+  "delivery_delay_seconds":30,
+  "created_at":"2022-11-19T17:53:42.858140",
+  "updated_at":"2022-11-19T17:53:42.858140"
+}
+```
+
+```bash
+curl -i -X 'POST' \
+  'http://localhost:8000/topics/events/messages' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "data": {"event_name": "event3", "success": true},
+  "attributes": {"event_name": "event3"}
+}'
+
+HTTP/1.1 201 Created
+date: Sat, 19 Nov 2022 18:02:08 GMT
+server: uvicorn
+content-length: 359
+content-type: application/json
+
+{
+  "data":[
+    {
+      "id":"ed42463c-7725-4c3d-9de0-142bb0074be6",
+      "queue_id":"delayed-events",
+      "data":{
+        "event_name":"event3",
+        "success":true
+      },
+      "attributes":{
+        "event_name":"event3"
+      },
+      "delivery_attempts":0,
+      "expired_at":"2022-12-03T18:02:09.435449",
+      "scheduled_at":"2022-11-19T18:02:39.435449",
+      "created_at":"2022-11-19T18:02:09.435449",
+      "updated_at":"2022-11-19T18:02:09.435449"
+    }
+  ]
+}
+```
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/delayed-events/messages' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Sat, 19 Nov 2022 18:02:24 GMT
+server: uvicorn
+content-length: 11
+content-type: application/json
+
+{"data":[]}
+```
+
+Wait for 30 seconds and try again:
+
+```bash
+curl -i -X 'GET' \
+  'http://localhost:8000/queues/delayed-events/messages' \
+  -H 'accept: application/json'
+
+HTTP/1.1 200 OK
+date: Sat, 19 Nov 2022 18:02:58 GMT
+server: uvicorn
+content-length: 359
+content-type: application/json
+
+{
+  "data":[
+    {
+      "id":"ed42463c-7725-4c3d-9de0-142bb0074be6",
+      "queue_id":"delayed-events",
+      "data":{
+        "success":true,
+        "event_name":"event3"
+      },
+      "attributes":{
+        "event_name":"event3"
+      },
+      "delivery_attempts":1,
+      "expired_at":"2022-12-03T18:02:09.435449",
+      "scheduled_at":"2022-11-19T18:03:28.853622",
+      "created_at":"2022-11-19T18:02:09.435449",
+      "updated_at":"2022-11-19T18:02:58.853622"
+    }
+  ]
+}
 ```
 
 ## Prometheus metrics

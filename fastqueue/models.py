@@ -28,6 +28,7 @@ class Queue(Base):
     message_retention_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_filters = sqlalchemy.Column(postgresql.JSONB, nullable=True)
     message_max_deliveries = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    delivery_delay_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 

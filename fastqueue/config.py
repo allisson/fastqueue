@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     min_message_max_deliveries: int = 1
     max_message_max_deliveries: int = 1000
     queue_cleanup_interval_seconds: int = 60
+    min_delivery_delay_seconds: int = 1
+    max_delivery_delay_seconds: int = 900
 
     # prometheus metrics
     enable_prometheus_metrics: bool = False

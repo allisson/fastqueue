@@ -91,6 +91,7 @@ def test_queue_service_create(session, topic):
     assert result.message_retention_seconds == data.message_retention_seconds
     assert result.message_filters == data.message_filters
     assert result.message_max_deliveries == data.message_max_deliveries
+    assert result.delivery_delay_seconds == data.delivery_delay_seconds
     assert result.created_at
     assert result.updated_at
 
@@ -102,6 +103,7 @@ def test_queue_service_update(session, queue):
         message_retention_seconds=600,
         message_filters=None,
         message_max_deliveries=None,
+        delivery_delay_seconds=10,
     )
 
     result = QueueService.update(queue.id, data, session=session)
@@ -112,6 +114,7 @@ def test_queue_service_update(session, queue):
     assert result.message_retention_seconds == data.message_retention_seconds
     assert result.message_filters == data.message_filters
     assert result.message_max_deliveries == data.message_max_deliveries
+    assert result.delivery_delay_seconds == data.delivery_delay_seconds
     assert result.created_at
     assert result.updated_at
 
@@ -125,6 +128,7 @@ def test_queue_service_get(session, queue):
     assert result.message_retention_seconds == queue.message_retention_seconds
     assert result.message_filters == queue.message_filters
     assert result.message_max_deliveries == queue.message_max_deliveries
+    assert result.delivery_delay_seconds == queue.delivery_delay_seconds
     assert result.created_at
     assert result.updated_at
 
@@ -375,6 +379,31 @@ def test_message_service_list_for_consume_with_dead_queue_and_message_max_delive
     now = datetime.utcnow()
     result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
     assert len(result.data) == 0
+
+
+def test_message_service_list_for_consume_with_delivery_delay_seconds(session, queue):
+    queue.ack_deadline_seconds = 1
+    queue.delivery_delay_seconds = 1
+    queue.message_max_deliveries = None
+    session.commit()
+    data = CreateMessageSchema(data={"message": "Hello World"}, attributes={"attr1": "attr1"})
+    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    now = datetime.utcnow()
+
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 0
+
+    sleep(1.0)
+    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    assert len(result.data) == 2
+    for message in result.data:
+        assert message.queue_id == queue.id
+        assert message.data == data.data
+        assert message.attributes == data.attributes
+        assert message.delivery_attempts == 1
+        assert message.scheduled_at > now
+        assert message.expired_at > now
 
 
 def test_message_service_ack(session, message):
