@@ -18,7 +18,7 @@ def queue_cleanup_task():
     with SessionLocal() as session:
         for result in session.query(Queue.id):
             queue_id = result[0]
-            QueueService.cleanup(id=queue_id, session=session)
+            QueueService(session=session).cleanup(id=queue_id)
 
     logger.info("finishing queue_cleanup task")
 
