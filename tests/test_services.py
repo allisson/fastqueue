@@ -21,14 +21,14 @@ def test_topic_service_create(session):
     id = "my_topic"
     data = CreateTopicSchema(id=id)
 
-    result = TopicService.create(data, session=session)
+    result = TopicService(session=session).create(data)
 
     assert result.id == id
     assert result.created_at
 
 
 def test_topic_service_get(session, topic):
-    result = TopicService.get(topic.id, session=session)
+    result = TopicService(session=session).get(topic.id)
 
     assert result.id == topic.id
     assert result.created_at
@@ -36,7 +36,7 @@ def test_topic_service_get(session, topic):
 
 def test_topic_service_get_not_found(session):
     with pytest.raises(NotFoundError):
-        TopicService.get("invalid-topic-name", session=session)
+        TopicService(session=session).get("invalid-topic-name")
 
 
 def test_topic_service_list(session):
@@ -45,11 +45,11 @@ def test_topic_service_list(session):
         session.add(topic)
     session.commit()
 
-    result = TopicService.list(filters=None, offset=0, limit=10, session=session)
+    result = TopicService(session=session).list(filters=None, offset=0, limit=10)
 
     assert len(result.data) == 5
 
-    result = TopicService.list(filters=None, offset=10, limit=10, session=session)
+    result = TopicService(session=session).list(filters=None, offset=10, limit=10)
 
     assert len(result.data) == 0
 
@@ -61,17 +61,17 @@ def test_topic_service_delete(session, topic):
     session.commit()
     assert session.query(Queue).filter_by(topic_id=topic.id).count() == 5
 
-    assert TopicService.delete(topic.id, session=session) is None
+    assert TopicService(session=session).delete(topic.id) is None
 
     with pytest.raises(NotFoundError):
-        TopicService.get(topic.id, session=session)
+        TopicService(session=session).get(topic.id)
 
     assert session.query(Queue).filter_by(topic_id=topic.id).count() == 0
 
 
 def test_topic_service_delete_not_found(session):
     with pytest.raises(NotFoundError):
-        TopicService.delete("invalid-topic-name", session=session)
+        TopicService(session=session).delete("invalid-topic-name")
 
 
 def test_queue_service_create(session, topic):
@@ -83,7 +83,7 @@ def test_queue_service_create(session, topic):
         message_filters={"attr1": ["attr1"]},
     )
 
-    result = QueueService.create(data, session=session)
+    result = QueueService(session=session).create(data)
 
     assert result.id == data.id
     assert result.topic_id == data.topic_id
@@ -106,7 +106,7 @@ def test_queue_service_update(session, queue):
         delivery_delay_seconds=10,
     )
 
-    result = QueueService.update(queue.id, data, session=session)
+    result = QueueService(session=session).update(queue.id, data)
 
     assert result.id == queue.id
     assert result.topic_id == data.topic_id
@@ -120,7 +120,7 @@ def test_queue_service_update(session, queue):
 
 
 def test_queue_service_get(session, queue):
-    result = QueueService.get(queue.id, session=session)
+    result = QueueService(session=session).get(queue.id)
 
     assert result.id == queue.id
     assert result.topic_id == queue.topic_id
@@ -139,11 +139,11 @@ def test_queue_service_list(session, topic):
         session.add(queue)
     session.commit()
 
-    result = QueueService.list(filters=None, offset=0, limit=10, session=session)
+    result = QueueService(session=session).list(filters=None, offset=0, limit=10)
 
     assert len(result.data) == 5
 
-    result = QueueService.list(filters=None, offset=10, limit=10, session=session)
+    result = QueueService(session=session).list(filters=None, offset=10, limit=10)
 
     assert len(result.data) == 0
 
@@ -155,10 +155,10 @@ def test_queue_service_delete(session, queue):
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
 
-    assert QueueService.delete(queue.id, session=session) is None
+    assert QueueService(session=session).delete(queue.id) is None
 
     with pytest.raises(NotFoundError):
-        QueueService.get(queue.id, session=session)
+        QueueService(session=session).get(queue.id)
 
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 0
 
@@ -170,7 +170,7 @@ def test_queue_service_delete_dead_queue(session, queue):
     queue.dead_queue_id = dead_queue.id
     session.commit()
 
-    assert QueueService.delete(dead_queue.id, session=session) is None
+    assert QueueService(session=session).delete(dead_queue.id) is None
 
     session.refresh(queue)
     assert queue.dead_queue_id is None
@@ -178,7 +178,7 @@ def test_queue_service_delete_dead_queue(session, queue):
 
 def test_queue_service_delete_not_found(session):
     with pytest.raises(NotFoundError):
-        QueueService.delete("invalid-queue-name", session=session)
+        QueueService(session=session).delete("invalid-queue-name")
 
 
 def test_queue_service_stats(session, queue):
@@ -189,7 +189,7 @@ def test_queue_service_stats(session, queue):
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
 
-    result = QueueService.stats(id=queue.id, session=session)
+    result = QueueService(session=session).stats(id=queue.id)
     assert result.num_undelivered_messages == 5
     assert result.oldest_unacked_message_age_seconds == 10
 
@@ -202,7 +202,7 @@ def test_queue_service_purge(session, queue):
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
 
-    assert QueueService.purge(id=queue.id, session=session) is None
+    assert QueueService(session=session).purge(id=queue.id) is None
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 0
 
 
@@ -214,7 +214,7 @@ def test_queue_service_cleanup_expired_at(session, queue):
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 2
 
-    assert QueueService.cleanup(id=queue.id, session=session) is None
+    assert QueueService(session=session).cleanup(id=queue.id) is None
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
     assert session.query(Message).filter_by(queue_id=queue.id).first() == message2
 
@@ -234,7 +234,7 @@ def test_queue_service_cleanup_move_to_dead_queue(session, queue):
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
 
-    assert QueueService.cleanup(id=queue.id, session=session) is None
+    assert QueueService(session=session).cleanup(id=queue.id) is None
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
     assert session.query(Message).filter_by(queue_id=queue.id).first() == message1
 
@@ -261,7 +261,7 @@ def test_queue_service_redrive(session, queue):
     assert session.query(Message).filter_by(queue_id=dead_queue.id).count() == 3
 
     data = RedriveQueueSchema(destination_queue_id=queue.id, message_count=3)
-    assert QueueService.redrive(id=dead_queue.id, data=data, session=session) is None
+    assert QueueService(session=session).redrive(id=dead_queue.id, data=data) is None
 
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
     assert session.query(Message).filter_by(queue_id=dead_queue.id).count() == 0
@@ -288,8 +288,13 @@ def test_queue_service_redrive(session, queue):
         (None, None, True),
     ],
 )
-def test_message_service_should_message_be_created_on_queue(queue_filters, message_attributes, expected):
-    assert MessageService._should_message_be_created_on_queue(queue_filters, message_attributes) is expected
+def test_message_service_should_message_be_created_on_queue(
+    session, queue_filters, message_attributes, expected
+):
+    assert (
+        MessageService(session=session)._should_message_be_created_on_queue(queue_filters, message_attributes)
+        is expected
+    )
 
 
 def test_message_service_create(session, topic):
@@ -303,7 +308,7 @@ def test_message_service_create(session, topic):
         data={"message": "Hello World"}, attributes={"attr1": "attr1", "attr2": "attr2"}
     )
 
-    result = MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    result = MessageService(session=session).create(topic_id=queue.topic_id, data=data)
 
     assert len(result.data) == 5
     for message in result.data:
@@ -317,11 +322,11 @@ def test_message_service_list_for_consume(session, queue):
     queue.message_max_deliveries = None
     session.commit()
     data = CreateMessageSchema(data={"message": "Hello World"}, attributes={"attr1": "attr1"})
-    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
-    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    MessageService(session=session).create(topic_id=queue.topic_id, data=data)
+    MessageService(session=session).create(topic_id=queue.topic_id, data=data)
     now = datetime.utcnow()
 
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 2
     for message in result.data:
         assert message.queue_id == queue.id
@@ -332,12 +337,12 @@ def test_message_service_list_for_consume(session, queue):
         assert message.expired_at > now
 
     sleep(0.5)
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 0
 
     sleep(0.5)
     now = datetime.utcnow()
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 2
     for message in result.data:
         assert message.queue_id == queue.id
@@ -357,11 +362,11 @@ def test_message_service_list_for_consume_with_dead_queue_and_message_max_delive
     queue.message_max_deliveries = 1
     session.commit()
     data = CreateMessageSchema(data={"message": "Hello World"}, attributes={"attr1": "attr1"})
-    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
-    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    MessageService(session=session).create(topic_id=queue.topic_id, data=data)
+    MessageService(session=session).create(topic_id=queue.topic_id, data=data)
     now = datetime.utcnow()
 
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 2
     for message in result.data:
         assert message.queue_id == queue.id
@@ -372,12 +377,12 @@ def test_message_service_list_for_consume_with_dead_queue_and_message_max_delive
         assert message.expired_at > now
 
     sleep(0.5)
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 0
 
     sleep(0.5)
     now = datetime.utcnow()
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 0
 
 
@@ -387,15 +392,15 @@ def test_message_service_list_for_consume_with_delivery_delay_seconds(session, q
     queue.message_max_deliveries = None
     session.commit()
     data = CreateMessageSchema(data={"message": "Hello World"}, attributes={"attr1": "attr1"})
-    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
-    MessageService.create(topic_id=queue.topic_id, data=data, session=session)
+    MessageService(session=session).create(topic_id=queue.topic_id, data=data)
+    MessageService(session=session).create(topic_id=queue.topic_id, data=data)
     now = datetime.utcnow()
 
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 0
 
     sleep(1.0)
-    result = MessageService.list_for_consume(queue_id=queue.id, limit=10, session=session)
+    result = MessageService(session=session).list_for_consume(queue_id=queue.id, limit=10)
     assert len(result.data) == 2
     for message in result.data:
         assert message.queue_id == queue.id
@@ -408,14 +413,14 @@ def test_message_service_list_for_consume_with_delivery_delay_seconds(session, q
 
 def test_message_service_ack(session, message):
     assert session.query(Message).filter_by(id=message.id).count() == 1
-    assert MessageService.ack(id=message.id, session=session) is None
+    assert MessageService(session=session).ack(id=message.id) is None
     assert session.query(Message).filter_by(id=message.id).count() == 0
 
 
 def test_message_service_ack_with_removed_message(session):
     id = uuid.uuid4().hex
     assert session.query(Message).filter_by(id=id).count() == 0
-    assert MessageService.ack(id=id, session=session) is None
+    assert MessageService(session=session).ack(id=id) is None
     assert session.query(Message).filter_by(id=id).count() == 0
 
 
@@ -423,7 +428,7 @@ def test_message_service_nack(session, message):
     original_scheduled_at = message.scheduled_at
     original_updated_at = message.updated_at
     assert session.query(Message).filter_by(id=message.id).count() == 1
-    assert MessageService.nack(id=message.id, session=session) is None
+    assert MessageService(session=session).nack(id=message.id) is None
     assert session.query(Message).filter_by(id=message.id).count() == 1
     session.refresh(message)
     assert message.scheduled_at != original_scheduled_at
@@ -433,5 +438,5 @@ def test_message_service_nack(session, message):
 def test_message_service_nack_with_removed_message(session):
     id = uuid.uuid4().hex
     assert session.query(Message).filter_by(id=id).count() == 0
-    assert MessageService.nack(id=id, session=session) is None
+    assert MessageService(session=session).nack(id=id) is None
     assert session.query(Message).filter_by(id=id).count() == 0

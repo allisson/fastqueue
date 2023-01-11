@@ -66,47 +66,45 @@ def get_filters_for_consume(queue: Any, now: datetime) -> list:
     return filters
 
 
-class TopicService:
-    @classmethod
-    def create(cls, data: CreateTopicSchema, session: Session) -> TopicSchema:
+class Service:
+    def __init__(self, session):
+        self.session = session
+
+
+class TopicService(Service):
+    def create(self, data: CreateTopicSchema) -> TopicSchema:
         topic = Topic(id=data.id, created_at=datetime.utcnow())
-        session.add(topic)
+        self.session.add(topic)
         try:
-            session.commit()
+            self.session.commit()
         except IntegrityError:
             raise AlreadyExistsError("This topic already exists")
         return TopicSchema.from_orm(topic)
 
-    @classmethod
-    def get(cls, id: str, session: Session) -> TopicSchema:
-        topic = get_model(model=Topic, filters={"id": id}, session=session)
+    def get(self, id: str) -> TopicSchema:
+        topic = get_model(model=Topic, filters={"id": id}, session=self.session)
         return TopicSchema.from_orm(topic)
 
-    @classmethod
-    def list(
-        cls, filters: dict | None, offset: int | None, limit: int | None, session: Session
-    ) -> ListTopicSchema:
+    def list(self, filters: dict | None, offset: int | None, limit: int | None) -> ListTopicSchema:
         topics = list_model(
-            model=Topic, filters=filters, offset=offset, limit=limit, order_by=Topic.id, session=session
+            model=Topic, filters=filters, offset=offset, limit=limit, order_by=Topic.id, session=self.session
         )
         return ListTopicSchema(data=[TopicSchema.from_orm(topic) for topic in topics])
 
-    @classmethod
-    def delete(cls, id: str, session: Session) -> None:
-        topic = get_model(model=Topic, filters={"id": id}, session=session)
-        session.query(Queue).filter_by(topic_id=topic.id).update({"topic_id": None})
-        session.query(Topic).filter_by(id=topic.id).delete()
-        session.commit()
+    def delete(self, id: str) -> None:
+        topic = get_model(model=Topic, filters={"id": id}, session=self.session)
+        self.session.query(Queue).filter_by(topic_id=topic.id).update({"topic_id": None})
+        self.session.query(Topic).filter_by(id=topic.id).delete()
+        self.session.commit()
 
 
-class QueueService:
-    @classmethod
-    def create(cls, data: CreateQueueSchema, session: Session) -> QueueSchema:
+class QueueService(Service):
+    def create(self, data: CreateQueueSchema) -> QueueSchema:
         if data.topic_id is not None:
-            get_model(model=Topic, filters={"id": data.topic_id}, session=session)
+            get_model(model=Topic, filters={"id": data.topic_id}, session=self.session)
 
         if data.dead_queue_id is not None:
-            get_model(model=Queue, filters={"id": data.dead_queue_id}, session=session)
+            get_model(model=Queue, filters={"id": data.dead_queue_id}, session=self.session)
 
         now = datetime.utcnow()
         queue = Queue(
@@ -121,22 +119,21 @@ class QueueService:
             created_at=now,
             updated_at=now,
         )
-        session.add(queue)
+        self.session.add(queue)
         try:
-            session.commit()
+            self.session.commit()
         except IntegrityError:
             raise AlreadyExistsError("This queue already exists")
         return QueueSchema.from_orm(queue)
 
-    @classmethod
-    def update(cls, id: str, data: UpdateQueueSchema, session: Session) -> QueueSchema:
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
+    def update(self, id: str, data: UpdateQueueSchema) -> QueueSchema:
+        queue = get_model(model=Queue, filters={"id": id}, session=self.session)
 
         if data.topic_id is not None:
-            get_model(model=Topic, filters={"id": data.topic_id}, session=session)
+            get_model(model=Topic, filters={"id": data.topic_id}, session=self.session)
 
         if data.dead_queue_id is not None:
-            get_model(model=Queue, filters={"id": data.dead_queue_id}, session=session)
+            get_model(model=Queue, filters={"id": data.dead_queue_id}, session=self.session)
 
         queue.topic_id = data.topic_id
         queue.dead_queue_id = data.dead_queue_id
@@ -147,40 +144,36 @@ class QueueService:
         queue.delivery_delay_seconds = data.delivery_delay_seconds
         queue.created_at = queue.created_at
         queue.updated_at = datetime.utcnow()
-        session.commit()
+        self.session.commit()
         return QueueSchema.from_orm(queue)
 
-    @classmethod
-    def get(cls, id: str, session: Session) -> QueueSchema:
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
+    def get(self, id: str) -> QueueSchema:
+        queue = get_model(model=Queue, filters={"id": id}, session=self.session)
         return QueueSchema.from_orm(queue)
 
-    @classmethod
-    def list(
-        cls, filters: dict | None, offset: int | None, limit: int | None, session: Session
-    ) -> ListQueueSchema:
+    def list(self, filters: dict | None, offset: int | None, limit: int | None) -> ListQueueSchema:
         queues = list_model(
-            model=Queue, filters=filters, offset=offset, limit=limit, order_by=Queue.id, session=session
+            model=Queue, filters=filters, offset=offset, limit=limit, order_by=Queue.id, session=self.session
         )
         return ListQueueSchema(data=[QueueSchema.from_orm(queue) for queue in queues])
 
-    @classmethod
-    def delete(cls, id: str, session: Session) -> None:
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
-        session.query(Message).filter_by(queue_id=queue.id).delete()
-        session.query(Queue).filter_by(dead_queue_id=queue.id).update({"dead_queue_id": None})
-        session.query(Queue).filter_by(id=queue.id).delete()
-        session.commit()
+    def delete(self, id: str) -> None:
+        queue = get_model(model=Queue, filters={"id": id}, session=self.session)
+        self.session.query(Message).filter_by(queue_id=queue.id).delete()
+        self.session.query(Queue).filter_by(dead_queue_id=queue.id).update({"dead_queue_id": None})
+        self.session.query(Queue).filter_by(id=queue.id).delete()
+        self.session.commit()
 
-    @classmethod
-    def stats(cls, id: str, session: Session) -> QueueStatsSchema:
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
+    def stats(self, id: str) -> QueueStatsSchema:
+        queue = get_model(model=Queue, filters={"id": id}, session=self.session)
 
         now = datetime.utcnow()
         filters = get_filters_for_consume(queue, now)
-        num_undelivered_messages = session.query(Message).filter(*filters).count()
+        num_undelivered_messages = self.session.query(Message).filter(*filters).count()
         oldest_unacked_message_age_seconds = 0
-        oldest_unacked_message = session.query(Message).filter(*filters).order_by(Message.created_at).first()
+        oldest_unacked_message = (
+            self.session.query(Message).filter(*filters).order_by(Message.created_at).first()
+        )
         if oldest_unacked_message is not None:
             oldest_unacked_message_age_seconds = (now - oldest_unacked_message.created_at).total_seconds()
 
@@ -189,25 +182,22 @@ class QueueService:
             oldest_unacked_message_age_seconds=oldest_unacked_message_age_seconds,
         )
 
-    @classmethod
-    def purge(cls, id: str, session: Session) -> None:
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
-        session.query(Message).filter_by(queue_id=queue.id).delete()
-        session.commit()
+    def purge(self, id: str) -> None:
+        queue = get_model(model=Queue, filters={"id": id}, session=self.session)
+        self.session.query(Message).filter_by(queue_id=queue.id).delete()
+        self.session.commit()
 
-    @classmethod
-    def _cleanup_expired_messages(cls, queue: QueueSchema, session: Session) -> None:
+    def _cleanup_expired_messages(self, queue: QueueSchema) -> None:
         now = datetime.utcnow()
 
         expired_at_filter = [Message.queue_id == queue.id, Message.expired_at <= now]
-        session.query(Message).filter(*expired_at_filter).delete()
+        self.session.query(Message).filter(*expired_at_filter).delete()
 
-    @classmethod
-    def _cleanup_move_messages_to_dead_queue(cls, queue: QueueSchema, session: Session) -> None:
+    def _cleanup_move_messages_to_dead_queue(self, queue: QueueSchema) -> None:
         if queue.message_max_deliveries is None or queue.dead_queue_id is None:
             return
 
-        dead_queue = get_model(model=Queue, filters={"id": queue.dead_queue_id}, session=session)
+        dead_queue = get_model(model=Queue, filters={"id": queue.dead_queue_id}, session=self.session)
 
         delivery_attempts_filter = [
             Message.queue_id == queue.id,
@@ -224,21 +214,21 @@ class QueueService:
             "scheduled_at": scheduled_at,
             "updated_at": now,
         }
-        session.query(Message).filter(*delivery_attempts_filter).update(update_data)
+        self.session.query(Message).filter(*delivery_attempts_filter).update(update_data)
 
-    @classmethod
-    def cleanup(cls, id: str, session: Session) -> None:
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
+    def cleanup(self, id: str) -> None:
+        queue = get_model(model=Queue, filters={"id": id}, session=self.session)
 
-        cls._cleanup_expired_messages(queue=queue, session=session)
-        cls._cleanup_move_messages_to_dead_queue(queue=queue, session=session)
+        self._cleanup_expired_messages(queue=queue)
+        self._cleanup_move_messages_to_dead_queue(queue=queue)
 
-        session.commit()
+        self.session.commit()
 
-    @classmethod
-    def redrive(cls, id: str, data: RedriveQueueSchema, session: Session) -> None:
-        queue = get_model(model=Queue, filters={"id": id}, session=session)
-        destination_queue = get_model(model=Queue, filters={"id": data.destination_queue_id}, session=session)
+    def redrive(self, id: str, data: RedriveQueueSchema) -> None:
+        queue = get_model(model=Queue, filters={"id": id}, session=self.session)
+        destination_queue = get_model(
+            model=Queue, filters={"id": data.destination_queue_id}, session=self.session
+        )
         now = datetime.utcnow()
         scheduled_at = now
         if destination_queue.delivery_delay_seconds is not None:
@@ -251,14 +241,13 @@ class QueueService:
             "scheduled_at": scheduled_at,
             "updated_at": now,
         }
-        session.query(Message).filter(*filters).update(update_data)
-        session.commit()
+        self.session.query(Message).filter(*filters).update(update_data)
+        self.session.commit()
 
 
-class MessageService:
-    @classmethod
+class MessageService(Service):
     def _should_message_be_created_on_queue(
-        cls, queue_filters: dict[str, list[Any]] | None, message_attributes: dict | None
+        self, queue_filters: dict[str, list[Any]] | None, message_attributes: dict | None
     ) -> bool:
         if queue_filters is not None:
             if message_attributes is None:
@@ -274,16 +263,22 @@ class MessageService:
 
         return True
 
-    @classmethod
-    def create(cls, topic_id: str, data: CreateMessageSchema, session: Session) -> ListMessageSchema:
+    def create(self, topic_id: str, data: CreateMessageSchema) -> ListMessageSchema:
         result = ListMessageSchema(data=[])
-        topic = TopicService.get(topic_id, session=session)
-        queues = QueueService.list(filters={"topic_id": topic.id}, offset=None, limit=None, session=session)
-        if not queues.data:
+        topic = get_model(model=Topic, filters={"id": topic_id}, session=self.session)
+        queues = list_model(
+            model=Queue,
+            filters={"topic_id": topic.id},
+            offset=None,
+            limit=None,
+            order_by=Queue.id,
+            session=self.session,
+        )
+        if not queues:
             return result
 
-        for queue in queues.data:
-            if cls._should_message_be_created_on_queue(queue.message_filters, data.attributes) is False:
+        for queue in queues:
+            if self._should_message_be_created_on_queue(queue.message_filters, data.attributes) is False:
                 continue
 
             now = datetime.utcnow()
@@ -301,20 +296,19 @@ class MessageService:
                 created_at=now,
                 updated_at=now,
             )
-            session.add(message)
+            self.session.add(message)
             result.data.append(MessageSchema.from_orm(message))
 
-        session.commit()
+        self.session.commit()
         return result
 
-    @classmethod
-    def list_for_consume(cls, queue_id: str, limit: int, session: Session) -> ListMessageSchema:
-        queue = QueueService.get(id=queue_id, session=session)
+    def list_for_consume(self, queue_id: str, limit: int) -> ListMessageSchema:
+        queue = get_model(model=Queue, filters={"id": queue_id}, session=self.session)
         now = datetime.utcnow()
         filters = get_filters_for_consume(queue, now)
         data = []
         messages = (
-            session.query(Message).filter(*filters).with_for_update(skip_locked=True).limit(limit).all()
+            self.session.query(Message).filter(*filters).with_for_update(skip_locked=True).limit(limit).all()
         )
         for message in messages:
             message.delivery_attempts += 1
@@ -322,22 +316,20 @@ class MessageService:
             message.updated_at = now
             data.append(MessageSchema.from_orm(message))
 
-        session.commit()
+        self.session.commit()
         return ListMessageSchema(data=data)
 
-    @classmethod
-    def ack(cls, id: str, session: Session) -> None:
-        session.query(Message).filter_by(id=id).delete()
-        session.commit()
+    def ack(self, id: str) -> None:
+        self.session.query(Message).filter_by(id=id).delete()
+        self.session.commit()
 
-    @classmethod
-    def nack(cls, id: str, session: Session) -> None:
+    def nack(self, id: str) -> None:
         try:
-            message = get_model(model=Message, filters={"id": id}, session=session)
+            message = get_model(model=Message, filters={"id": id}, session=self.session)
         except NotFoundError:
             return
 
         now = datetime.utcnow()
         message.scheduled_at = now
         message.updated_at = now
-        session.commit()
+        self.session.commit()

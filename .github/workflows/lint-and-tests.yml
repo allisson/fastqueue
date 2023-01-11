@@ -34,10 +34,10 @@ jobs:
         with:
           path: ~/.cache
           key: self-runner-${{ runner.os }}-python-3.11-poetry-${{ hashFiles('poetry.lock') }}-precommit-${{ hashFiles('.pre-commit-config.yaml') }}
-      - name: Set up Python 3.11.0
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11.0-rc.2
+          python-version: '3.11'
       - name: Install dependencies
         run: |
           cp env.sample .env
