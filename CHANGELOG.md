@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/allisson/fastqueue/compare/v1.4.0...v1.5.0) (2023-01-11)
+
+
+### Features
+
+* convert services to be used as instances ([#44](https://github.com/allisson/fastqueue/issues/44)) ([8e95aea](https://github.com/allisson/fastqueue/commit/8e95aea14f924ac3d46f37ea8a55c461e60d7126))
+
 ## [1.4.0](https://github.com/allisson/fastqueue/compare/v1.3.2...v1.4.0) (2022-11-19)
 
 
