@@ -6,22 +6,23 @@ authors = ["Allisson Azevedo <allisson@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.81.0"
-uvicorn = {extras = ["standard"], version = "^0.18.3"}
-SQLAlchemy = "^1.4.40"
-alembic = "^1.8.1"
-typer = {extras = ["all"], version = "^0.6.1"}
-python-json-logger = "^2.0.4"
-rocketry = "^2.3.0"
-prometheus-fastapi-instrumentator = "^5.9.1"
-psycopg2-binary = "^2.9.5"
+fastapi = "^0"
+uvicorn = {extras = ["standard"], version = "^0"}
+SQLAlchemy = "^1"
+alembic = "^1"
+typer = {extras = ["all"], version = "^0"}
+python-json-logger = "^2"
+rocketry = "^2"
+prometheus-fastapi-instrumentator = "^5"
+psycopg2-binary = "^2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7"
-pytest-cov = "^3.0.0"
-pre-commit = "^2.20.0"
-requests = "^2.28.1"
-factory-boy = "^3.2.1"
+pytest-cov = "^4"
+pre-commit = "^3"
+requests = "^2"
+factory-boy = "^3"
+httpx = "^0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
