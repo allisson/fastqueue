@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/allisson/fastqueue/compare/v1.5.0...v1.6.0) (2023-03-16)
+
+
+### Features
+
+* pin dependencies on major version ([#46](https://github.com/allisson/fastqueue/issues/46)) ([289baf4](https://github.com/allisson/fastqueue/commit/289baf4a3d0a921564114b4632d8ffcc6e96b94e))
+
 ## [1.5.0](https://github.com/allisson/fastqueue/compare/v1.4.0...v1.5.0) (2023-01-11)
 
 
