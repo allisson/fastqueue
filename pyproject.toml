@@ -8,7 +8,7 @@ authors = ["Allisson Azevedo <allisson@gmail.com>"]
 python = "^3.11"
 fastapi = "^0"
 uvicorn = {extras = ["standard"], version = "^0"}
-SQLAlchemy = "^1"
+SQLAlchemy = "^2"
 alembic = "^1"
 typer = {extras = ["all"], version = "^0"}
 python-json-logger = "^2"

@@ -41,8 +41,7 @@ def test_topic_service_get_not_found(session):
 
 def test_topic_service_list(session):
     topics = TopicFactory.build_batch(5)
-    for topic in topics:
-        session.add(topic)
+    session.add_all(topics)
     session.commit()
 
     result = TopicService(session=session).list(filters=None, offset=0, limit=10)
@@ -56,8 +55,7 @@ def test_topic_service_list(session):
 
 def test_topic_service_delete(session, topic):
     queues = QueueFactory.build_batch(5, topic_id=topic.id)
-    for queue in queues:
-        session.add(queue)
+    session.add_all(queues)
     session.commit()
     assert session.query(Queue).filter_by(topic_id=topic.id).count() == 5
 
@@ -135,8 +133,7 @@ def test_queue_service_get(session, queue):
 
 def test_queue_service_list(session, topic):
     queues = QueueFactory.build_batch(5, topic_id=topic.id)
-    for queue in queues:
-        session.add(queue)
+    session.add_all(queues)
     session.commit()
 
     result = QueueService(session=session).list(filters=None, offset=0, limit=10)
@@ -150,8 +147,7 @@ def test_queue_service_list(session, topic):
 
 def test_queue_service_delete(session, queue):
     messages = MessageFactory.build_batch(5, queue_id=queue.id)
-    for message in messages:
-        session.add(message)
+    session.add_all(messages)
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
 
@@ -184,8 +180,7 @@ def test_queue_service_delete_not_found(session):
 def test_queue_service_stats(session, queue):
     created_at = datetime.utcnow() - timedelta(seconds=10)
     messages = MessageFactory.build_batch(5, queue_id=queue.id, created_at=created_at)
-    for message in messages:
-        session.add(message)
+    session.add_all(messages)
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
 
@@ -197,8 +192,7 @@ def test_queue_service_stats(session, queue):
 def test_queue_service_purge(session, queue):
     created_at = datetime.utcnow() - timedelta(seconds=10)
     messages = MessageFactory.build_batch(5, queue_id=queue.id, created_at=created_at)
-    for message in messages:
-        session.add(message)
+    session.add_all(messages)
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 5
 
@@ -209,14 +203,13 @@ def test_queue_service_purge(session, queue):
 def test_queue_service_cleanup_expired_at(session, queue):
     message1 = MessageFactory(queue_id=queue.id, expired_at=datetime.utcnow() - timedelta(seconds=1))
     message2 = MessageFactory(queue_id=queue.id, expired_at=datetime.utcnow() + timedelta(seconds=1))
-    session.add(message1)
-    session.add(message2)
+    session.add_all([message1, message2])
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 2
 
     assert QueueService(session=session).cleanup(id=queue.id) is None
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
-    assert session.query(Message).filter_by(queue_id=queue.id).first() == message2
+    assert session.query(Message).filter_by(queue_id=queue.id).first().id == message2.id
 
 
 def test_queue_service_cleanup_move_to_dead_queue(session, queue):
@@ -228,15 +221,13 @@ def test_queue_service_cleanup_move_to_dead_queue(session, queue):
     message1 = MessageFactory(queue_id=queue.id, delivery_attempts=1)
     message2 = MessageFactory(queue_id=queue.id, delivery_attempts=2)
     message3 = MessageFactory(queue_id=queue.id, delivery_attempts=3)
-    session.add(message1)
-    session.add(message2)
-    session.add(message3)
+    session.add_all([message1, message2, message3])
     session.commit()
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
 
     assert QueueService(session=session).cleanup(id=queue.id) is None
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 1
-    assert session.query(Message).filter_by(queue_id=queue.id).first() == message1
+    assert session.query(Message).filter_by(queue_id=queue.id).first().id == message1.id
 
     assert session.query(Message).filter_by(queue_id=dead_queue.id).count() == 2
     session.refresh(message2)
@@ -252,9 +243,7 @@ def test_queue_service_redrive(session, queue):
     message1 = MessageFactory(queue_id=dead_queue.id)
     message2 = MessageFactory(queue_id=dead_queue.id)
     message3 = MessageFactory(queue_id=dead_queue.id)
-    session.add(message1)
-    session.add(message2)
-    session.add(message3)
+    session.add_all([message1, message2, message3])
     session.commit()
 
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 0
@@ -266,9 +255,10 @@ def test_queue_service_redrive(session, queue):
     assert session.query(Message).filter_by(queue_id=queue.id).count() == 3
     assert session.query(Message).filter_by(queue_id=dead_queue.id).count() == 0
     messages = session.query(Message).filter_by(queue_id=queue.id).all()
-    assert message1 in messages
-    assert message2 in messages
-    assert message3 in messages
+    message_ids = [message.id for message in messages]
+    assert message1.id in message_ids
+    assert message2.id in message_ids
+    assert message3.id in message_ids
 
 
 @pytest.mark.parametrize(
@@ -298,17 +288,15 @@ def test_message_service_should_message_be_created_on_queue(
 
 
 def test_message_service_create(session, topic):
-    queues = QueueFactory.build_batch(5)
-    for queue in queues:
-        queue.topic_id = topic.id
-        session.add(queue)
+    queues = QueueFactory.build_batch(5, topic_id=topic.id)
+    session.add_all(queues)
     session.commit()
     queue_names = [queue.id for queue in queues]
     data = CreateMessageSchema(
         data={"message": "Hello World"}, attributes={"attr1": "attr1", "attr2": "attr2"}
     )
 
-    result = MessageService(session=session).create(topic_id=queue.topic_id, data=data)
+    result = MessageService(session=session).create(topic_id=topic.id, data=data)
 
     assert len(result.data) == 5
     for message in result.data:

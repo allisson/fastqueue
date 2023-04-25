@@ -67,7 +67,7 @@ def get_filters_for_consume(queue: Any, now: datetime) -> list:
 
 
 class Service:
-    def __init__(self, session):
+    def __init__(self, session: Session):
         self.session = session
 
 
@@ -93,7 +93,6 @@ class TopicService(Service):
 
     def delete(self, id: str) -> None:
         topic = get_model(model=Topic, filters={"id": id}, session=self.session)
-        self.session.query(Queue).filter_by(topic_id=topic.id).update({"topic_id": None})
         self.session.query(Topic).filter_by(id=topic.id).delete()
         self.session.commit()
 
@@ -159,8 +158,6 @@ class QueueService(Service):
 
     def delete(self, id: str) -> None:
         queue = get_model(model=Queue, filters={"id": id}, session=self.session)
-        self.session.query(Message).filter_by(queue_id=queue.id).delete()
-        self.session.query(Queue).filter_by(dead_queue_id=queue.id).update({"dead_queue_id": None})
         self.session.query(Queue).filter_by(id=queue.id).delete()
         self.session.commit()
 
@@ -214,7 +211,9 @@ class QueueService(Service):
             "scheduled_at": scheduled_at,
             "updated_at": now,
         }
-        self.session.query(Message).filter(*delivery_attempts_filter).update(update_data)
+        self.session.query(Message).filter(*delivery_attempts_filter).update(
+            update_data, synchronize_session=False
+        )
 
     def cleanup(self, id: str) -> None:
         queue = get_model(model=Queue, filters={"id": id}, session=self.session)
@@ -241,7 +240,7 @@ class QueueService(Service):
             "scheduled_at": scheduled_at,
             "updated_at": now,
         }
-        self.session.query(Message).filter(*filters).update(update_data)
+        self.session.query(Message).filter(*filters).update(update_data, synchronize_session=False)
         self.session.commit()
 
 

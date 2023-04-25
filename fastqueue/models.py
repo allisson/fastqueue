@@ -11,7 +11,7 @@ class Topic(Base):
     created_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 
     def __repr__(self):
-        return f"User(id={self.id!r})"
+        return f"User(id={self.id})"
 
 
 class Queue(Base):
@@ -19,10 +19,13 @@ class Queue(Base):
 
     id = sqlalchemy.Column(sqlalchemy.String(length=128), primary_key=True, nullable=False)
     topic_id = sqlalchemy.Column(
-        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("topics.id"), index=True, nullable=True
+        sqlalchemy.String(length=128),
+        sqlalchemy.ForeignKey("topics.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
     )
     dead_queue_id = sqlalchemy.Column(
-        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("queues.id"), nullable=True
+        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("queues.id", ondelete="SET NULL"), nullable=True
     )
     ack_deadline_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     message_retention_seconds = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
@@ -33,7 +36,7 @@ class Queue(Base):
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 
     def __repr__(self):
-        return f"Queue(id={self.id!r}, topic_id={self.topic_id!r})"
+        return f"Queue(id={self.id}, topic_id={self.topic_id})"
 
 
 class Message(Base):
@@ -48,7 +51,7 @@ class Message(Base):
 
     id = sqlalchemy.Column(postgresql.UUID, primary_key=True, nullable=False)
     queue_id = sqlalchemy.Column(
-        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("queues.id"), nullable=False
+        sqlalchemy.String(length=128), sqlalchemy.ForeignKey("queues.id", ondelete="CASCADE"), nullable=False
     )
     data = sqlalchemy.Column(postgresql.JSONB, nullable=False)
     attributes = sqlalchemy.Column(postgresql.JSONB, nullable=True)
@@ -59,4 +62,4 @@ class Message(Base):
     updated_at = sqlalchemy.Column(sqlalchemy.DateTime, nullable=False)
 
     def __repr__(self):
-        return f"Message(id={self.id!r}, queue_id={self.queue_id!r})"
+        return f"Message(id={self.id}, queue_id={self.queue_id})"
