@@ -1,6 +1,7 @@
 name: Execute lint and tests
 
 on:
+  workflow_call:
   push:
     branches:
       - "**"
@@ -14,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:14-alpine
+        image: postgres:15-alpine
         env:
           POSTGRES_DB: fastqueue-test
           POSTGRES_USER: fastqueue

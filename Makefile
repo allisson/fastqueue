@@ -11,7 +11,7 @@ run-db:
 		-e POSTGRES_PASSWORD=fastqueue \
 		-e POSTGRES_DB=fastqueue \
 		-p 5432:5432 \
-		-d postgres:14-alpine
+		-d postgres:15-alpine
 
 rm-db:
 	docker kill $$(docker ps -aqf name=postgres-fastqueue)
@@ -24,7 +24,7 @@ run-test-db:
 		-e POSTGRES_PASSWORD=fastqueue \
 		-e POSTGRES_DB=fastqueue-test \
 		-p 5432:5432 \
-		-d postgres:14-alpine
+		-d postgres:15-alpine
 
 rm-test-db:
 	docker kill $$(docker ps -aqf name=postgres-fastqueue-test)
