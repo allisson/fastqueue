@@ -13,7 +13,7 @@ from fastqueue.schemas import (
     RedriveQueueSchema,
     UpdateQueueSchema,
 )
-from fastqueue.services import MessageService, QueueService, TopicService
+from fastqueue.services import HealthService, MessageService, QueueService, TopicService
 from tests.factories import MessageFactory, QueueFactory, TopicFactory
 
 
@@ -428,3 +428,8 @@ def test_message_service_nack_with_removed_message(session):
     assert session.query(Message).filter_by(id=id).count() == 0
     assert MessageService(session=session).nack(id=id) is None
     assert session.query(Message).filter_by(id=id).count() == 0
+
+
+def test_health_service(session):
+    response = HealthService(session=session).check()
+    assert response.success

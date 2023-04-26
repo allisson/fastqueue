@@ -1,5 +1,6 @@
 import uvicorn
 from fastapi import Depends, FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from sqlalchemy.orm import Session
@@ -11,6 +12,7 @@ from fastqueue.schemas import (
     CreateMessageSchema,
     CreateQueueSchema,
     CreateTopicSchema,
+    HealthSchema,
     ListMessageSchema,
     ListQueueSchema,
     ListTopicSchema,
@@ -21,7 +23,7 @@ from fastqueue.schemas import (
     TopicSchema,
     UpdateQueueSchema,
 )
-from fastqueue.services import MessageService, QueueService, TopicService
+from fastqueue.services import HealthService, MessageService, QueueService, TopicService
 
 tags_metadata = [
     {
@@ -67,7 +69,8 @@ def already_exists_exception_handler(request: Request, exc: AlreadyExistsError):
 
 @app.exception_handler(NotFoundError)
 def not_found_exception_handler(request: Request, exc: NotFoundError):
-    return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"detail": exc.args[0]})
+    response = jsonable_encoder(NotFoundSchema(detail=exc.args[0]))
+    return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content=response)
 
 
 @app.post("/topics", response_model=TopicSchema, status_code=status.HTTP_201_CREATED, tags=["topics"])
@@ -206,10 +209,22 @@ def nack_message(message_id: str, session: Session = Depends(get_session)):
     return MessageService(session=session).nack(id=message_id)
 
 
+@app.get(
+    "/health",
+    response_model=HealthSchema,
+    status_code=status.HTTP_200_OK,
+    tags=["healthcheck"],
+    responses={500: {"model": HealthSchema}},
+)
+def health(session: Session = Depends(get_session)):
+    response = HealthService(session=session).check()
+    status_code = status.HTTP_200_OK if response.success else status.HTTP_500_INTERNAL_SERVER_ERROR
+    return JSONResponse(status_code=status_code, content=jsonable_encoder(response))
+
+
 def run_server():
     uvicorn.run(
         "fastqueue.api:app",
-        debug=settings.debug,
         host=settings.server_host,
         port=settings.server_port,
         log_level=settings.log_level.lower(),

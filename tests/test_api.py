@@ -294,3 +294,11 @@ def test_nack_message(session, message, client):
     response = client.put(f"/messages/{message.id}/nack")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+
+
+def test_health(session, client):
+    response = client.get("/health")
+    response_data = response.json()
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response_data == {"success": True}
