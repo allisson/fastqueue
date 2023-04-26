@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.7.0](https://github.com/allisson/fastqueue/compare/v1.6.0...v1.7.0) (2023-04-26)
+
+
+### Features
+
+* add an endpoint for health check ([#50](https://github.com/allisson/fastqueue/issues/50)) ([fd102bc](https://github.com/allisson/fastqueue/commit/fd102bc3bd2bd68d01cd95d4479f67b654ce61bd))
+* upgrade sqlalchemy to version 2.x ([#48](https://github.com/allisson/fastqueue/issues/48)) ([2f74302](https://github.com/allisson/fastqueue/commit/2f74302d683068a2dda347d35d356b68d2d26a6c))
+
 ## [1.6.0](https://github.com/allisson/fastqueue/compare/v1.5.0...v1.6.0) (2023-03-16)
 
 
