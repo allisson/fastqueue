@@ -137,3 +137,7 @@ class MessageSchema(Schema):
 
 class ListMessageSchema(Schema):
     data: list[MessageSchema]
+
+
+class HealthSchema(Schema):
+    success: bool

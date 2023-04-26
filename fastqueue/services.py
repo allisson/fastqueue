@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Any
 
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -11,6 +12,7 @@ from fastqueue.schemas import (
     CreateMessageSchema,
     CreateQueueSchema,
     CreateTopicSchema,
+    HealthSchema,
     ListMessageSchema,
     ListQueueSchema,
     ListTopicSchema,
@@ -332,3 +334,14 @@ class MessageService(Service):
         message.scheduled_at = now
         message.updated_at = now
         self.session.commit()
+
+
+class HealthService(Service):
+    def check(self) -> HealthSchema:
+        success = True
+        try:
+            self.session.query(text("1")).from_statement(text("SELECT 1")).all()
+        except Exception:
+            success = False
+
+        return HealthSchema(success=success)
